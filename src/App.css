@@ -73,6 +73,16 @@ input {
   height: 35px;
 }
 
+.games-list-title {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-justify {
+  justify-content: space-between;
+  align-items: center;
+}
+
 .header-title {
   display: flex;
   flex-direction: row;
@@ -112,8 +122,15 @@ input {
 
 /* NAVBAR */
 
+.main-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .navbar {
-  position: fixed;
+  display: flex;
+  flex-direction: row;
   padding: 5px;
   background: #0c1a2b;
   font-family: 'Oswald', 'Arial Narrow', sans-serif;

@@ -1,6 +1,9 @@
 import React from 'react';
 
 const GamesList = props => {
+  let goToCreateGame = e => {
+    console.log('i am the click ---> ', e);
+  };
   let pendingGames = props.pendingGames;
   let gamesList;
   if (props.pendingGames && props.pendingGames.length > 0) {
@@ -47,7 +50,25 @@ const GamesList = props => {
       </div>
     );
   }
-  return <div className="right-box">{gamesList}</div>;
+  return (
+    <div>
+      <nav className="navbar pure-menu pure-menu-horizontal">
+        <a href="#" className="pure-menu-heading pure-menu-link">
+          ETHERMAN
+        </a>
+      </nav>
+      <div className="header-title flex-justify">
+        <div className="games-list-title">
+          <h1>Etherman</h1>
+          <h2>A PvP game of Hangman for Ether</h2>
+        </div>
+        <div className="create-new-game">
+          <button onClick={goToCreateGame}>start new game</button>
+        </div>
+      </div>
+      <div className="right-box">{gamesList}</div>
+    </div>
+  );
 };
 
 export default GamesList;

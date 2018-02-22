@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Route, Switch } from 'react-router-dom';
 import SimpleStorageContract from '../build/contracts/SimpleStorage.json';
 import HangmanContract from '../build/contracts/Hangman.json';
 import getWeb3 from './utils/getWeb3';
@@ -235,62 +236,9 @@ class App extends Component {
     }
     return (
       <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-          <a href="#" className="pure-menu-heading pure-menu-link">
-            ETHERMAN
-          </a>
-        </nav>
-
-        <main className="container">
-          <div className="left-box">
-            <div className="pure-u-1-1">
-              <h1>Etherman</h1>
-              <h2>A PvP game of Hangman for Ether</h2>
-              <div className="ether-user">
-                <input
-                  id="ether-user__input"
-                  type="text"
-                  placeholder="Enter UserName Here"
-                  value={this.state.userName}
-                  onChange={this.updateUserName}
-                />
-              </div>
-              <div className="ether-word">
-                <input
-                  id="ether-word__input"
-                  type="text"
-                  placeholder="Enter Word Here"
-                  value={this.state.word}
-                  onChange={this.updateWord}
-                />
-              </div>
-              <div className="ether-wager">
-                <input
-                  id="ether-wager__input"
-                  type="text"
-                  placeholder="Enter Wager Amount Here"
-                  value={this.state.wager}
-                  onChange={this.updateWager}
-                />
-              </div>
-              <div className="ether-guess">
-                <input
-                  id="ether-guess__input"
-                  type="text"
-                  placeholder="Enter the Number of Guesses"
-                  value={this.state.tries}
-                  onChange={this.updateTries}
-                />
-              </div>
-              <div className="start-game">
-                <button className="start-game__btn" onClick={this.createNewGame}>
-                  Create Game
-                </button>
-              </div>
-            </div>
-          </div>
-          <GamesList pendingGames={this.state.pendingGames} />
-        </main>
+        <Switch>
+          <Route exact path="/" component={() => <GamesList pendingGames={this.state.pendingGames} />} />
+        </Switch>
       </div>
     );
   }
