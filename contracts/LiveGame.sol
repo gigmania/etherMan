@@ -1,5 +1,7 @@
 pragma solidity ^0.4.19;
 
+/* import './Hangman.sol'; */
+
 contract LiveGame {
 
   event GameStarted(string uniqGameString);

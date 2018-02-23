@@ -6,6 +6,7 @@ import getWeb3 from './utils/getWeb3';
 import GamesList from './GamesList';
 import CreateGame from './CreateGame';
 import ListGame from './ListGame';
+import LiveGame from './LiveGame';
 
 import './css/oswald.css';
 import './css/open-sans.css';
@@ -137,6 +138,14 @@ class App extends Component {
           <Route
             path="/create-game"
             component={() => <CreateGame accounts={this.state.accounts} hangmanContract={this.state.hangmanContract} />}
+          />
+          <Route
+            path="/live-game/:id"
+            component={props => {
+              const routeId = props.match.params.id.trim();
+              console.log(routeId);
+              return <LiveGame />;
+            }}
           />
         </Switch>
       </div>

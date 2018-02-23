@@ -11,35 +11,6 @@ class GamesList extends Component {
     };
   }
 
-  startLiveGame(game) {
-    // e.preventDefault();
-    console.log(this.props);
-    let self = this;
-    let account = this.props.accounts[9];
-    let liveGameInstance;
-    let wager = new Number(this.props.wager).valueOf();
-    let tries = new Number(this.props.tries).valueOf();
-    let word = this.state.word;
-    let userName = this.state.userName;
-    let userWord = word + wager + userName + tries;
-    console.log('i am the state ---> ', this.state);
-    // this.props.liveGameContract
-    //   .deployed()
-    //   .then(function(instance) {
-    //     liveGameInstance = instance;
-    //     return liveGameInstance.startLiveGame(word, wager, tries, userWord, userName, {
-    //       from: account,
-    //       gas: 3000000
-    //     });
-    //   })
-    //   .then(function(result) {
-    //     console.log('i am the result ---> ', result);
-    //   })
-    //   .catch(function(err) {
-    //     console.log(err);
-    //   });
-  }
-
   render() {
     let { pendingGames } = this.props;
     let gamesList;
@@ -54,28 +25,15 @@ class GamesList extends Component {
             <div className="header-tries tries header-title">Tries</div>
           </div>
           {pendingGames.map(game => {
-            return <div>Hi</div>;
-            // return (
-            //   <div className="pending-game" key={game.userWord}>
-            //     <div className="game-attr user">
-            //       <b> {game.userName} </b>
-            //     </div>
-            //     <div className="game-attr letters">
-            //       <b> {game.word.length} </b>
-            //     </div>
-            //     <div className="game-attr wager">
-            //       <b> {game.wager} </b>
-            //     </div>
-            //     <div className="game-attr tries">
-            //       <b> {game.tries} </b>
-            //     </div>
-            //     <div className="game-attr play-game">
-            //       <button className="play-game__btn" onClick={this.startLiveGame(game)}>
-            //         PLAY
-            //       </button>
-            //     </div>
-            //   </div>
-            // );
+            return (
+              <ListGame
+                key={game.userWord}
+                {...game}
+                accounts={this.props.accounts}
+                liveGameContract={this.props.liveGameContract}
+                web3={this.props.web3}
+              />
+            );
           })}
         </div>
       );
