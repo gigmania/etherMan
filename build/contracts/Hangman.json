@@ -1637,7 +1637,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 246,
+                                  "referencedDeclaration": 272,
                                   "type": "function () pure returns (bytes32)",
                                   "value": "keccak256"
                                 },
@@ -1776,7 +1776,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 255,
+                              "referencedDeclaration": 281,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -2488,9 +2488,9 @@
     "4447": {
       "events": {},
       "links": {},
-      "address": "0x30753e4a8aad7f8597332e813735def5dd395028"
+      "address": "0x345ca3e014aaf5dca488057592ee47305d9b3e10"
     }
   },
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-02-22T20:31:25.428Z"
+  "updatedAt": "2018-02-23T03:05:05.532Z"
 }

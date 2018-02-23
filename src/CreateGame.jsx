@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Header from './Header';
 
 class CreateGame extends Component {
   constructor(props) {
@@ -9,15 +10,78 @@ class CreateGame extends Component {
       wager: undefined,
       tries: undefined
     };
+    this.updateUserName = this.updateUserName.bind(this);
+    this.updateWager = this.updateWager.bind(this);
+    this.updateTries = this.updateTries.bind(this);
+    this.updateWord = this.updateWord.bind(this);
+    this.createNewGame = this.createNewGame.bind(this);
+  }
+
+  createNewGame(e) {
+    e.preventDefault();
+    let self = this;
+    let account = this.props.accounts[0];
+    let hangmanInstance;
+    let wager = new Number(this.state.wager).valueOf();
+    let tries = new Number(this.state.tries).valueOf();
+    let word = this.state.word;
+    let userName = this.state.userName;
+    let userWord = word + wager + userName + tries;
+    console.log('i am the state ---> ', this.state);
+    this.props.hangmanContract
+      .deployed()
+      .then(function(instance) {
+        hangmanInstance = instance;
+        return hangmanInstance.createGame(word, wager, tries, userWord, userName, {
+          from: account,
+          gas: 3000000
+        });
+      })
+      .then(function(result) {
+        console.log('i am the result ---> ', result);
+        self.setState({
+          userName: '',
+          word: '',
+          wager: undefined,
+          tries: undefined
+        });
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+  }
+
+  updateUserName(e) {
+    e.preventDefault();
+    this.setState({
+      userName: e.target.value
+    });
+  }
+
+  updateWord(e) {
+    e.preventDefault();
+    this.setState({
+      word: e.target.value
+    });
+  }
+
+  updateWager(e) {
+    e.preventDefault();
+    this.setState({
+      wager: e.target.value
+    });
+  }
+
+  updateTries(e) {
+    e.preventDefault();
+    this.setState({
+      tries: e.target.value
+    });
   }
   render() {
     return (
       <div className="main-box">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-          <a href="#" className="pure-menu-heading pure-menu-link">
-            ETHERMAN
-          </a>
-        </nav>
+        <Header />
         <div className="header-title flex-justify">
           <div className="games-list-title">
             <h1>Etherman</h1>
@@ -25,7 +89,7 @@ class CreateGame extends Component {
           </div>
         </div>
         <div className="left-box">
-          <div className="ether-user">
+          <div className="ether-user new-game-input">
             <input
               id="ether-user__input"
               type="text"
@@ -34,7 +98,7 @@ class CreateGame extends Component {
               onChange={this.updateUserName}
             />
           </div>
-          <div className="ether-word">
+          <div className="ether-word new-game-input">
             <input
               id="ether-word__input"
               type="text"
@@ -43,7 +107,7 @@ class CreateGame extends Component {
               onChange={this.updateWord}
             />
           </div>
-          <div className="ether-wager">
+          <div className="ether-wager new-game-input">
             <input
               id="ether-wager__input"
               type="text"
@@ -52,7 +116,7 @@ class CreateGame extends Component {
               onChange={this.updateWager}
             />
           </div>
-          <div className="ether-guess">
+          <div className="ether-guess new-game-input">
             <input
               id="ether-guess__input"
               type="text"

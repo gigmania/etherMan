@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import HangmanContract from '../build/contracts/Hangman.json';
+import LiveGameContract from '../build/contracts/LiveGame.json';
 import getWeb3 from './utils/getWeb3';
 import GamesList from './GamesList';
 import CreateGame from './CreateGame';
@@ -19,19 +20,10 @@ class App extends Component {
       web3: null,
       pendingGameIds: {},
       pendingGames: [],
-      userName: '',
-      word: '',
-      wager: undefined,
-      tries: undefined,
       hangmanContract: undefined,
       account: undefined,
       accounts: []
     };
-    this.updateUserName = this.updateUserName.bind(this);
-    this.updateWager = this.updateWager.bind(this);
-    this.updateTries = this.updateTries.bind(this);
-    this.updateWord = this.updateWord.bind(this);
-    this.createNewGame = this.createNewGame.bind(this);
     this.addGameToGames = this.addGameToGames.bind(this);
     this.handlePendingGameResult = this.handlePendingGameResult.bind(this);
     this.handleNewGameResult = this.handleNewGameResult.bind(this);
@@ -69,6 +61,7 @@ class App extends Component {
   }
   handlePendingGameResult(pendingGame) {
     let game = this.gameMaker(pendingGame.args);
+    //console.log(pendingGame);
     this.addGameToGames(game);
   }
   handleNewGameResult(newGame) {
@@ -94,9 +87,12 @@ class App extends Component {
     let self = this;
     const contract = require('truffle-contract');
     const Hangman = contract(HangmanContract);
+    const LiveGame = contract(LiveGameContract);
     Hangman.setProvider(this.state.web3.currentProvider);
+    LiveGame.setProvider(this.state.web3.currentProvider);
     this.setState({
-      hangmanContract: Hangman
+      hangmanContract: Hangman,
+      liveGameContract: LiveGame
     });
 
     let hangmanInstance;
@@ -105,7 +101,6 @@ class App extends Component {
     this.state.web3.eth.getAccounts((error, accounts) => {
       this.state.hangmanContract.deployed().then(instance => {
         hangmanInstance = instance;
-        console.log('I am the instance ---> ', hangmanInstance);
         hangmanInstance.PendingGame(function(error, result) {
           self.handlePendingGameResult(result);
         });
@@ -119,57 +114,6 @@ class App extends Component {
         });
       });
     });
-  }
-
-  updateUserName(e) {
-    e.preventDefault();
-    this.setState({
-      userName: e.target.value
-    });
-  }
-
-  updateWord(e) {
-    e.preventDefault();
-    this.setState({
-      word: e.target.value
-    });
-  }
-
-  updateWager(e) {
-    e.preventDefault();
-    this.setState({
-      wager: e.target.value
-    });
-  }
-
-  updateTries(e) {
-    e.preventDefault();
-    this.setState({
-      tries: e.target.value
-    });
-  }
-
-  createNewGame(e) {
-    e.preventDefault();
-    let account = this.state.account;
-    let hangmanInstance;
-    let wager = new Number(this.state.wager).valueOf();
-    let tries = new Number(this.state.tries).valueOf();
-    let word = this.state.word;
-    let userName = this.state.userName;
-    let userWord = word + wager + userName + tries;
-    this.state.hangmanContract
-      .deployed()
-      .then(function(instance) {
-        hangmanInstance = instance;
-        return hangmanInstance.createGame(word, wager, tries, userWord, userName, {
-          from: account,
-          gas: 3000000
-        });
-      })
-      .catch(function(err) {
-        console.log(err);
-      });
   }
 
   render() {
@@ -213,10 +157,22 @@ class App extends Component {
     return (
       <div className="App">
         <Switch>
-          <Route exact path="/" component={() => <GamesList pendingGames={this.state.pendingGames} />} />
+          <Route
+            exact
+            path="/"
+            component={() => (
+              <GamesList
+                pendingGames={this.state.pendingGames}
+                accounts={this.state.accounts}
+                web3={this.state.web3}
+                hangmanContract={this.state.hangmanContract}
+                liveGameContract={this.state.liveGameContract}
+              />
+            )}
+          />
           <Route
             path="/create-game"
-            component={() => <CreateGame account={this.state.account} hangmanContract={this.state.hangmanContract} />}
+            component={() => <CreateGame accounts={this.state.accounts} hangmanContract={this.state.hangmanContract} />}
           />
         </Switch>
       </div>

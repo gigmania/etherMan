@@ -1,0 +1,1483 @@
+{
+  "contractName": "LiveGame",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "uniqGameString",
+          "type": "string"
+        }
+      ],
+      "name": "GameStarted",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "word",
+          "type": "string"
+        },
+        {
+          "name": "wager",
+          "type": "uint8"
+        },
+        {
+          "name": "maxTries",
+          "type": "uint8"
+        },
+        {
+          "name": "uniqGameString",
+          "type": "string"
+        },
+        {
+          "name": "hangman",
+          "type": "string"
+        },
+        {
+          "name": "challenger",
+          "type": "string"
+        }
+      ],
+      "name": "startLiveGame",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6105f28061001e6000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680635dbb1c7f14610046575b600080fd5b341561005157600080fd5b610182600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803560ff1690602001909190803560ff1690602001909190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091905050610184565b005b600061018e610439565b610197856103c4565b9150336001600084815260200190815260200160002060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610100604051908101604052808981526020018860ff1681526020018760ff16815260200183815260200186815260200185815260200184815260200182815250600080848152602001908152602001600020600082015181600001908051906020019061025a92919061044d565b5060208201518160010160006101000a81548160ff021916908360ff16021790555060408201518160010160016101000a81548160ff021916908360ff1602179055506060820151816002015560808201518160030190805190602001906102c392919061044d565b5060a08201518160040190805190602001906102e092919061044d565b5060c08201518160050190805190602001906102fd92919061044d565b5060e082015181600601908051906020019061031a9291906104cd565b509050507f4c49022e3faa3d594bcd4c0a41d358281ad8bb232d3d0cdb1add1e71a9daf266856040518080602001828103825283818151815260200191508051906020019080838360005b83811015610380578082015181840152602081019050610365565b50505050905090810190601f1680156103ad5780820380516001836020036101000a031916815260200191505b509250505060405180910390a15050505050505050565b600080826040518082805190602001908083835b6020831015156103fd57805182526020820191506020810190506020830392506103d8565b6001836020036101000a038019825116818451168082178552505050505050905001915050604051809103902060019004905080915050919050565b602060405190810160405280600081525090565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061048e57805160ff19168380011785556104bc565b828001600101855582156104bc579182015b828111156104bb5782518255916020019190600101906104a0565b5b5090506104c9919061052d565b5090565b82805482825590600052602060002090810192821561051c579160200282015b8281111561051b57825182908051906020019061050b92919061044d565b50916020019190600101906104ed565b5b5090506105299190610552565b5090565b61054f91905b8082111561054b576000816000905550600101610533565b5090565b90565b61057b91905b80821115610577576000818161056e919061057e565b50600101610558565b5090565b90565b50805460018160011615610100020316600290046000825580601f106105a457506105c3565b601f0160209004906000526020600020908101906105c2919061052d565b5b505600a165627a7a7230582003f73e3a202fc0617f7bbb79bf0cc19e38d1866a331d45f3b1b72ef0e5a086db0029",
+  "deployedBytecode": "0x606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680635dbb1c7f14610046575b600080fd5b341561005157600080fd5b610182600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803560ff1690602001909190803560ff1690602001909190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091905050610184565b005b600061018e610439565b610197856103c4565b9150336001600084815260200190815260200160002060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610100604051908101604052808981526020018860ff1681526020018760ff16815260200183815260200186815260200185815260200184815260200182815250600080848152602001908152602001600020600082015181600001908051906020019061025a92919061044d565b5060208201518160010160006101000a81548160ff021916908360ff16021790555060408201518160010160016101000a81548160ff021916908360ff1602179055506060820151816002015560808201518160030190805190602001906102c392919061044d565b5060a08201518160040190805190602001906102e092919061044d565b5060c08201518160050190805190602001906102fd92919061044d565b5060e082015181600601908051906020019061031a9291906104cd565b509050507f4c49022e3faa3d594bcd4c0a41d358281ad8bb232d3d0cdb1add1e71a9daf266856040518080602001828103825283818151815260200191508051906020019080838360005b83811015610380578082015181840152602081019050610365565b50505050905090810190601f1680156103ad5780820380516001836020036101000a031916815260200191505b509250505060405180910390a15050505050505050565b600080826040518082805190602001908083835b6020831015156103fd57805182526020820191506020810190506020830392506103d8565b6001836020036101000a038019825116818451168082178552505050505050905001915050604051809103902060019004905080915050919050565b602060405190810160405280600081525090565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061048e57805160ff19168380011785556104bc565b828001600101855582156104bc579182015b828111156104bb5782518255916020019190600101906104a0565b5b5090506104c9919061052d565b5090565b82805482825590600052602060002090810192821561051c579160200282015b8281111561051b57825182908051906020019061050b92919061044d565b50916020019190600101906104ed565b5b5090506105299190610552565b5090565b61054f91905b8082111561054b576000816000905550600101610533565b5090565b90565b61057b91905b80821115610577576000818161056e919061057e565b50600101610558565b5090565b90565b50805460018160011615610100020316600290046000825580601f106105a457506105c3565b601f0160209004906000526020600020908101906105c2919061052d565b5b505600a165627a7a7230582003f73e3a202fc0617f7bbb79bf0cc19e38d1866a331d45f3b1b72ef0e5a086db0029",
+  "sourceMap": "26:894:0:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "26:894:0:-;;;;;;;;;;;;;;;;;;;;;;;;374:411;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;510:11;563:23;;:::i;:::-;524:33;542:14;524:17;:33::i;:::-;510:47;;619:10;592:16;:24;609:6;592:24;;;;;;;;;;;;:37;;;;;;;;;;;;;;;;;;660:87;;;;;;;;;671:4;660:87;;;;677:5;660:87;;;;;;684:8;660:87;;;;;;694:6;660:87;;;;702:14;660:87;;;;718:7;660:87;;;;727:10;660:87;;;;739:7;660:87;;;635:14;:22;650:6;635:22;;;;;;;;;;;:112;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;753:27;765:14;753:27;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:2;8:100;;;99:1;94:3;90;84:5;80:1;75:3;71;64:6;52:2;49:1;45:3;40:15;;8:100;;;12:14;3:109;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;374:411:0;;;;;;;;:::o;789:129::-;851:4;863:9;890:4;880:15;;;;;;;;;;;;;36:153:-1;66:2;61:3;58:2;51:6;36:153;;;182:3;176:5;171:3;164:6;98:2;93:3;89;82:19;;123:2;118:3;114;107:19;;148:2;143:3;139;132:19;;36:153;;;274:1;267:3;263:2;259:3;254;250;246;315:4;311:3;305;299:5;295:3;356:4;350:3;344:5;340:3;389:7;380;377:2;372:3;365:6;3:399;;;;;;;;;;;;;;;;;;;875:21:0;;;863:33;;909:4;902:11;;789:129;;;;:::o;26:894::-;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;:::o",
+  "source": "pragma solidity ^0.4.19;\n\ncontract LiveGame {\n\n  event GameStarted(string uniqGameString);\n\n  struct ActiveGame {\n    string word;\n    uint8 wager;\n    uint8 maxTries;\n    uint id;\n    string uniqGameString;\n    string hangman;\n    string challenger;\n    string[] guesses;\n  }\n\n  mapping (uint => ActiveGame) activeGamesMap;\n  mapping (uint => address) gameToChallenger;\n\n  function startLiveGame(string word, uint8 wager, uint8 maxTries, string uniqGameString, string hangman, string challenger) public {\n    uint randId = _generateRandomId(uniqGameString);\n    string[] memory guesses;\n    gameToChallenger[randId] = msg.sender;\n    activeGamesMap[randId] = ActiveGame(word, wager, maxTries, randId, uniqGameString, hangman, challenger, guesses);\n    GameStarted(uniqGameString);\n  }\n\n  function _generateRandomId(string word) private pure returns (uint) {\n    uint rand = uint(keccak256(word));\n    return rand;\n  }\n}\n",
+  "sourcePath": "/Users/tysondaugherty/Desktop/funApps/ether/etherHang/contracts/LiveGame.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/Users/tysondaugherty/Desktop/funApps/ether/etherHang/contracts/LiveGame.sol",
+      "exportedSymbols": {
+        "LiveGame": [
+          103
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".19"
+          ]
+        },
+        "id": 1,
+        "name": "PragmaDirective",
+        "src": "0:24:0"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            103
+          ],
+          "name": "LiveGame",
+          "scope": 104
+        },
+        "children": [
+          {
+            "attributes": {
+              "anonymous": false,
+              "name": "GameStarted"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": false,
+                      "name": "uniqGameString",
+                      "scope": 5,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 2,
+                        "name": "ElementaryTypeName",
+                        "src": "67:6:0"
+                      }
+                    ],
+                    "id": 3,
+                    "name": "VariableDeclaration",
+                    "src": "67:21:0"
+                  }
+                ],
+                "id": 4,
+                "name": "ParameterList",
+                "src": "66:23:0"
+              }
+            ],
+            "id": 5,
+            "name": "EventDefinition",
+            "src": "49:41:0"
+          },
+          {
+            "attributes": {
+              "canonicalName": "LiveGame.ActiveGame",
+              "name": "ActiveGame",
+              "scope": 103,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "word",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "string",
+                      "type": "string storage pointer"
+                    },
+                    "id": 6,
+                    "name": "ElementaryTypeName",
+                    "src": "118:6:0"
+                  }
+                ],
+                "id": 7,
+                "name": "VariableDeclaration",
+                "src": "118:11:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "wager",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint8",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint8",
+                      "type": "uint8"
+                    },
+                    "id": 8,
+                    "name": "ElementaryTypeName",
+                    "src": "135:5:0"
+                  }
+                ],
+                "id": 9,
+                "name": "VariableDeclaration",
+                "src": "135:11:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "maxTries",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint8",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint8",
+                      "type": "uint8"
+                    },
+                    "id": 10,
+                    "name": "ElementaryTypeName",
+                    "src": "152:5:0"
+                  }
+                ],
+                "id": 11,
+                "name": "VariableDeclaration",
+                "src": "152:14:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "id",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 12,
+                    "name": "ElementaryTypeName",
+                    "src": "172:4:0"
+                  }
+                ],
+                "id": 13,
+                "name": "VariableDeclaration",
+                "src": "172:7:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "uniqGameString",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "string",
+                      "type": "string storage pointer"
+                    },
+                    "id": 14,
+                    "name": "ElementaryTypeName",
+                    "src": "185:6:0"
+                  }
+                ],
+                "id": 15,
+                "name": "VariableDeclaration",
+                "src": "185:21:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "hangman",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "string",
+                      "type": "string storage pointer"
+                    },
+                    "id": 16,
+                    "name": "ElementaryTypeName",
+                    "src": "212:6:0"
+                  }
+                ],
+                "id": 17,
+                "name": "VariableDeclaration",
+                "src": "212:14:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "challenger",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "string",
+                      "type": "string storage pointer"
+                    },
+                    "id": 18,
+                    "name": "ElementaryTypeName",
+                    "src": "232:6:0"
+                  }
+                ],
+                "id": 19,
+                "name": "VariableDeclaration",
+                "src": "232:17:0"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "guesses",
+                  "scope": 23,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "string storage ref[] storage pointer",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "length": null,
+                      "type": "string storage ref[] storage pointer"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 20,
+                        "name": "ElementaryTypeName",
+                        "src": "255:6:0"
+                      }
+                    ],
+                    "id": 21,
+                    "name": "ArrayTypeName",
+                    "src": "255:8:0"
+                  }
+                ],
+                "id": 22,
+                "name": "VariableDeclaration",
+                "src": "255:16:0"
+              }
+            ],
+            "id": 23,
+            "name": "StructDefinition",
+            "src": "94:182:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "activeGamesMap",
+              "scope": 103,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "mapping(uint256 => struct LiveGame.ActiveGame storage ref)",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "mapping(uint256 => struct LiveGame.ActiveGame storage ref)"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 24,
+                    "name": "ElementaryTypeName",
+                    "src": "289:4:0"
+                  },
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "ActiveGame",
+                      "referencedDeclaration": 23,
+                      "type": "struct LiveGame.ActiveGame storage pointer"
+                    },
+                    "id": 25,
+                    "name": "UserDefinedTypeName",
+                    "src": "297:10:0"
+                  }
+                ],
+                "id": 26,
+                "name": "Mapping",
+                "src": "280:28:0"
+              }
+            ],
+            "id": 27,
+            "name": "VariableDeclaration",
+            "src": "280:43:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "gameToChallenger",
+              "scope": 103,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "mapping(uint256 => address)",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "mapping(uint256 => address)"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint",
+                      "type": "uint256"
+                    },
+                    "id": 28,
+                    "name": "ElementaryTypeName",
+                    "src": "336:4:0"
+                  },
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "type": "address"
+                    },
+                    "id": 29,
+                    "name": "ElementaryTypeName",
+                    "src": "344:7:0"
+                  }
+                ],
+                "id": 30,
+                "name": "Mapping",
+                "src": "327:25:0"
+              }
+            ],
+            "id": 31,
+            "name": "VariableDeclaration",
+            "src": "327:42:0"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "startLiveGame",
+              "payable": false,
+              "scope": 103,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "word",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 32,
+                        "name": "ElementaryTypeName",
+                        "src": "397:6:0"
+                      }
+                    ],
+                    "id": 33,
+                    "name": "VariableDeclaration",
+                    "src": "397:11:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "wager",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint8",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint8",
+                          "type": "uint8"
+                        },
+                        "id": 34,
+                        "name": "ElementaryTypeName",
+                        "src": "410:5:0"
+                      }
+                    ],
+                    "id": 35,
+                    "name": "VariableDeclaration",
+                    "src": "410:11:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "maxTries",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint8",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint8",
+                          "type": "uint8"
+                        },
+                        "id": 36,
+                        "name": "ElementaryTypeName",
+                        "src": "423:5:0"
+                      }
+                    ],
+                    "id": 37,
+                    "name": "VariableDeclaration",
+                    "src": "423:14:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "uniqGameString",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 38,
+                        "name": "ElementaryTypeName",
+                        "src": "439:6:0"
+                      }
+                    ],
+                    "id": 39,
+                    "name": "VariableDeclaration",
+                    "src": "439:21:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "hangman",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 40,
+                        "name": "ElementaryTypeName",
+                        "src": "462:6:0"
+                      }
+                    ],
+                    "id": 41,
+                    "name": "VariableDeclaration",
+                    "src": "462:14:0"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "challenger",
+                      "scope": 84,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 42,
+                        "name": "ElementaryTypeName",
+                        "src": "478:6:0"
+                      }
+                    ],
+                    "id": 43,
+                    "name": "VariableDeclaration",
+                    "src": "478:17:0"
+                  }
+                ],
+                "id": 44,
+                "name": "ParameterList",
+                "src": "396:100:0"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 45,
+                "name": "ParameterList",
+                "src": "504:0:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        47
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "randId",
+                          "scope": 84,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint",
+                              "type": "uint256"
+                            },
+                            "id": 46,
+                            "name": "ElementaryTypeName",
+                            "src": "510:4:0"
+                          }
+                        ],
+                        "id": 47,
+                        "name": "VariableDeclaration",
+                        "src": "510:11:0"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "uint256",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_string_memory_ptr",
+                                  "typeString": "string memory"
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 102,
+                              "type": "function (string memory) pure returns (uint256)",
+                              "value": "_generateRandomId"
+                            },
+                            "id": 48,
+                            "name": "Identifier",
+                            "src": "524:17:0"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 39,
+                              "type": "string memory",
+                              "value": "uniqGameString"
+                            },
+                            "id": 49,
+                            "name": "Identifier",
+                            "src": "542:14:0"
+                          }
+                        ],
+                        "id": 50,
+                        "name": "FunctionCall",
+                        "src": "524:33:0"
+                      }
+                    ],
+                    "id": 51,
+                    "name": "VariableDeclarationStatement",
+                    "src": "510:47:0"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        null
+                      ],
+                      "initialValue": null
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "guesses",
+                          "scope": 84,
+                          "stateVariable": false,
+                          "storageLocation": "memory",
+                          "type": "string memory[] memory",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "length": null,
+                              "type": "string storage ref[] storage pointer"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "name": "string",
+                                  "type": "string storage pointer"
+                                },
+                                "id": 53,
+                                "name": "ElementaryTypeName",
+                                "src": "563:6:0"
+                              }
+                            ],
+                            "id": 54,
+                            "name": "ArrayTypeName",
+                            "src": "563:8:0"
+                          }
+                        ],
+                        "id": 55,
+                        "name": "VariableDeclaration",
+                        "src": "563:23:0"
+                      }
+                    ],
+                    "id": 56,
+                    "name": "VariableDeclarationStatement",
+                    "src": "563:23:0"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "address"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "type": "address"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 31,
+                                  "type": "mapping(uint256 => address)",
+                                  "value": "gameToChallenger"
+                                },
+                                "id": 57,
+                                "name": "Identifier",
+                                "src": "592:16:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 47,
+                                  "type": "uint256",
+                                  "value": "randId"
+                                },
+                                "id": 58,
+                                "name": "Identifier",
+                                "src": "609:6:0"
+                              }
+                            ],
+                            "id": 59,
+                            "name": "IndexAccess",
+                            "src": "592:24:0"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "sender",
+                              "referencedDeclaration": null,
+                              "type": "address"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 115,
+                                  "type": "msg",
+                                  "value": "msg"
+                                },
+                                "id": 60,
+                                "name": "Identifier",
+                                "src": "619:3:0"
+                              }
+                            ],
+                            "id": 61,
+                            "name": "MemberAccess",
+                            "src": "619:10:0"
+                          }
+                        ],
+                        "id": 62,
+                        "name": "Assignment",
+                        "src": "592:37:0"
+                      }
+                    ],
+                    "id": 63,
+                    "name": "ExpressionStatement",
+                    "src": "592:37:0"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "struct LiveGame.ActiveGame storage ref"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "type": "struct LiveGame.ActiveGame storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 27,
+                                  "type": "mapping(uint256 => struct LiveGame.ActiveGame storage ref)",
+                                  "value": "activeGamesMap"
+                                },
+                                "id": 64,
+                                "name": "Identifier",
+                                "src": "635:14:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 47,
+                                  "type": "uint256",
+                                  "value": "randId"
+                                },
+                                "id": 65,
+                                "name": "Identifier",
+                                "src": "650:6:0"
+                              }
+                            ],
+                            "id": 66,
+                            "name": "IndexAccess",
+                            "src": "635:22:0"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": true,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "struct LiveGame.ActiveGame memory",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_string_memory_ptr",
+                                      "typeString": "string memory"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_uint8",
+                                      "typeString": "uint8"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_uint8",
+                                      "typeString": "uint8"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_string_memory_ptr",
+                                      "typeString": "string memory"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_string_memory_ptr",
+                                      "typeString": "string memory"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_string_memory_ptr",
+                                      "typeString": "string memory"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_array$_t_string_memory_$dyn_memory_ptr",
+                                      "typeString": "string memory[] memory"
+                                    }
+                                  ],
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 23,
+                                  "type": "type(struct LiveGame.ActiveGame storage pointer)",
+                                  "value": "ActiveGame"
+                                },
+                                "id": 67,
+                                "name": "Identifier",
+                                "src": "660:10:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 33,
+                                  "type": "string memory",
+                                  "value": "word"
+                                },
+                                "id": 68,
+                                "name": "Identifier",
+                                "src": "671:4:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 35,
+                                  "type": "uint8",
+                                  "value": "wager"
+                                },
+                                "id": 69,
+                                "name": "Identifier",
+                                "src": "677:5:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 37,
+                                  "type": "uint8",
+                                  "value": "maxTries"
+                                },
+                                "id": 70,
+                                "name": "Identifier",
+                                "src": "684:8:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 47,
+                                  "type": "uint256",
+                                  "value": "randId"
+                                },
+                                "id": 71,
+                                "name": "Identifier",
+                                "src": "694:6:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 39,
+                                  "type": "string memory",
+                                  "value": "uniqGameString"
+                                },
+                                "id": 72,
+                                "name": "Identifier",
+                                "src": "702:14:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 41,
+                                  "type": "string memory",
+                                  "value": "hangman"
+                                },
+                                "id": 73,
+                                "name": "Identifier",
+                                "src": "718:7:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 43,
+                                  "type": "string memory",
+                                  "value": "challenger"
+                                },
+                                "id": 74,
+                                "name": "Identifier",
+                                "src": "727:10:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 55,
+                                  "type": "string memory[] memory",
+                                  "value": "guesses"
+                                },
+                                "id": 75,
+                                "name": "Identifier",
+                                "src": "739:7:0"
+                              }
+                            ],
+                            "id": 76,
+                            "name": "FunctionCall",
+                            "src": "660:87:0"
+                          }
+                        ],
+                        "id": 77,
+                        "name": "Assignment",
+                        "src": "635:112:0"
+                      }
+                    ],
+                    "id": 78,
+                    "name": "ExpressionStatement",
+                    "src": "635:112:0"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_string_memory_ptr",
+                                  "typeString": "string memory"
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 5,
+                              "type": "function (string memory)",
+                              "value": "GameStarted"
+                            },
+                            "id": 79,
+                            "name": "Identifier",
+                            "src": "753:11:0"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 39,
+                              "type": "string memory",
+                              "value": "uniqGameString"
+                            },
+                            "id": 80,
+                            "name": "Identifier",
+                            "src": "765:14:0"
+                          }
+                        ],
+                        "id": 81,
+                        "name": "FunctionCall",
+                        "src": "753:27:0"
+                      }
+                    ],
+                    "id": 82,
+                    "name": "ExpressionStatement",
+                    "src": "753:27:0"
+                  }
+                ],
+                "id": 83,
+                "name": "Block",
+                "src": "504:281:0"
+              }
+            ],
+            "id": 84,
+            "name": "FunctionDefinition",
+            "src": "374:411:0"
+          },
+          {
+            "attributes": {
+              "constant": true,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "_generateRandomId",
+              "payable": false,
+              "scope": 103,
+              "stateMutability": "pure",
+              "superFunction": null,
+              "visibility": "private"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "word",
+                      "scope": 102,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 85,
+                        "name": "ElementaryTypeName",
+                        "src": "816:6:0"
+                      }
+                    ],
+                    "id": 86,
+                    "name": "VariableDeclaration",
+                    "src": "816:11:0"
+                  }
+                ],
+                "id": 87,
+                "name": "ParameterList",
+                "src": "815:13:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 102,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint",
+                          "type": "uint256"
+                        },
+                        "id": 88,
+                        "name": "ElementaryTypeName",
+                        "src": "851:4:0"
+                      }
+                    ],
+                    "id": 89,
+                    "name": "VariableDeclaration",
+                    "src": "851:4:0"
+                  }
+                ],
+                "id": 90,
+                "name": "ParameterList",
+                "src": "850:6:0"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        92
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "rand",
+                          "scope": 102,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint",
+                              "type": "uint256"
+                            },
+                            "id": 91,
+                            "name": "ElementaryTypeName",
+                            "src": "863:4:0"
+                          }
+                        ],
+                        "id": 92,
+                        "name": "VariableDeclaration",
+                        "src": "863:9:0"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "uint256",
+                          "type_conversion": true
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bytes32",
+                                  "typeString": "bytes32"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "type": "type(uint256)",
+                              "value": "uint"
+                            },
+                            "id": 93,
+                            "name": "ElementaryTypeNameExpression",
+                            "src": "875:4:0"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "bytes32",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_string_memory_ptr",
+                                      "typeString": "string memory"
+                                    }
+                                  ],
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 109,
+                                  "type": "function () pure returns (bytes32)",
+                                  "value": "keccak256"
+                                },
+                                "id": 94,
+                                "name": "Identifier",
+                                "src": "880:9:0"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 86,
+                                  "type": "string memory",
+                                  "value": "word"
+                                },
+                                "id": 95,
+                                "name": "Identifier",
+                                "src": "890:4:0"
+                              }
+                            ],
+                            "id": 96,
+                            "name": "FunctionCall",
+                            "src": "880:15:0"
+                          }
+                        ],
+                        "id": 97,
+                        "name": "FunctionCall",
+                        "src": "875:21:0"
+                      }
+                    ],
+                    "id": 98,
+                    "name": "VariableDeclarationStatement",
+                    "src": "863:33:0"
+                  },
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 90
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 92,
+                          "type": "uint256",
+                          "value": "rand"
+                        },
+                        "id": 99,
+                        "name": "Identifier",
+                        "src": "909:4:0"
+                      }
+                    ],
+                    "id": 100,
+                    "name": "Return",
+                    "src": "902:11:0"
+                  }
+                ],
+                "id": 101,
+                "name": "Block",
+                "src": "857:61:0"
+              }
+            ],
+            "id": 102,
+            "name": "FunctionDefinition",
+            "src": "789:129:0"
+          }
+        ],
+        "id": 103,
+        "name": "ContractDefinition",
+        "src": "26:894:0"
+      }
+    ],
+    "id": 104,
+    "name": "SourceUnit",
+    "src": "0:921:0"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.19+commit.c4cbbb05.Emscripten.clang"
+  },
+  "networks": {
+    "4447": {
+      "events": {},
+      "links": {},
+      "address": "0xf25186b5081ff5ce73482ad761db0eb0d25abfbf"
+    }
+  },
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2018-02-23T03:05:05.534Z"
+}
