@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
-import SimpleStorageContract from '../build/contracts/SimpleStorage.json';
 import HangmanContract from '../build/contracts/Hangman.json';
 import getWeb3 from './utils/getWeb3';
 import GamesList from './GamesList';
+import CreateGame from './CreateGame';
 
 import './css/oswald.css';
 import './css/open-sans.css';
@@ -59,7 +59,6 @@ class App extends Component {
     let gameIds = this.state.pendingGameIds;
     let games = this.state.pendingGames;
     if (this.state.pendingGameIds[game.userWord] == null) {
-      console.log('ADDING GAME TO GAMES');
       gameIds[game.userWord] = game.userWord;
       games.push(game);
       this.setState({
@@ -94,16 +93,12 @@ class App extends Component {
   instantiateContract() {
     let self = this;
     const contract = require('truffle-contract');
-    const simpleStorage = contract(SimpleStorageContract);
     const Hangman = contract(HangmanContract);
     Hangman.setProvider(this.state.web3.currentProvider);
-    simpleStorage.setProvider(this.state.web3.currentProvider);
     this.setState({
       hangmanContract: Hangman
     });
 
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var simpleStorageInstance;
     let hangmanInstance;
 
     // Get accounts.
@@ -115,7 +110,6 @@ class App extends Component {
           self.handlePendingGameResult(result);
         });
         hangmanInstance.NewGame(function(error, result) {
-          console.log(result);
           self.handlePendingGameResult(result);
         });
         hangmanInstance.getPendingGames({ from: accounts[0] });
@@ -124,23 +118,6 @@ class App extends Component {
           accounts: accounts
         });
       });
-
-      // simpleStorage
-      //   .deployed()
-      //   .then(instance => {
-      //     simpleStorageInstance = instance;
-      //
-      //     // Stores a given value, 5 by default.
-      //     return simpleStorageInstance.set(77, { from: accounts[0] });
-      //   })
-      //   .then(result => {
-      //     // Get the value from the contract to prove it worked.
-      //     return simpleStorageInstance.get.call(accounts[0]);
-      //   })
-      //   .then(result => {
-      //     // Update state with the result.
-      //     return this.setState({ storageValue: result.c[0] });
-      //   });
     });
   }
 
@@ -176,7 +153,6 @@ class App extends Component {
     e.preventDefault();
     let account = this.state.account;
     let hangmanInstance;
-    console.log(this.state);
     let wager = new Number(this.state.wager).valueOf();
     let tries = new Number(this.state.tries).valueOf();
     let word = this.state.word;
@@ -238,6 +214,10 @@ class App extends Component {
       <div className="App">
         <Switch>
           <Route exact path="/" component={() => <GamesList pendingGames={this.state.pendingGames} />} />
+          <Route
+            path="/create-game"
+            component={() => <CreateGame account={this.state.account} hangmanContract={this.state.hangmanContract} />}
+          />
         </Switch>
       </div>
     );

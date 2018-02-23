@@ -18,10 +18,55 @@ class CreateGame extends Component {
             ETHERMAN
           </a>
         </nav>
-        <main className="container">
-          <h1>Etherman</h1>
-          <h2>A PvP game of Hangman for Ether</h2>
-        </main>
+        <div className="header-title flex-justify">
+          <div className="games-list-title">
+            <h1>Etherman</h1>
+            <h2>A PvP game of Hangman for Ether</h2>
+          </div>
+        </div>
+        <div className="left-box">
+          <div className="ether-user">
+            <input
+              id="ether-user__input"
+              type="text"
+              placeholder="Enter UserName Here"
+              value={this.state.userName}
+              onChange={this.updateUserName}
+            />
+          </div>
+          <div className="ether-word">
+            <input
+              id="ether-word__input"
+              type="text"
+              placeholder="Enter Word Here"
+              value={this.state.word}
+              onChange={this.updateWord}
+            />
+          </div>
+          <div className="ether-wager">
+            <input
+              id="ether-wager__input"
+              type="text"
+              placeholder="Enter Wager Amount Here"
+              value={this.state.wager}
+              onChange={this.updateWager}
+            />
+          </div>
+          <div className="ether-guess">
+            <input
+              id="ether-guess__input"
+              type="text"
+              placeholder="Enter the Number of Guesses"
+              value={this.state.tries}
+              onChange={this.updateTries}
+            />
+          </div>
+          <div className="start-game">
+            <button className="start-game__btn" onClick={this.createNewGame}>
+              Create Game
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

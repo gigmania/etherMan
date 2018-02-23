@@ -38,14 +38,16 @@ input {
 
 .left-box {
   display: flex;
-  flex-direction: row;
-  flex-basis: 40%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .right-box {
   display: flex;
   flex-direction: row;
-  flex-basis: 60%;
+  flex-basis: 100%;
 }
 
 .pending-games {
@@ -59,6 +61,15 @@ input {
   flex-direction: row;
   height: 35px;
   padding: 7px 2px;
+}
+
+.create-new-game {
+  margin-right: 15px;
+}
+
+.game-route-btn {
+  text-decoration: none;
+  color: black;
 }
 
 .game-attr {

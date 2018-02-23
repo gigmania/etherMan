@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const GamesList = props => {
   let goToCreateGame = e => {
@@ -63,7 +64,9 @@ const GamesList = props => {
           <h2>A PvP game of Hangman for Ether</h2>
         </div>
         <div className="create-new-game">
-          <button onClick={goToCreateGame}>start new game</button>
+          <Link className="game-route-btn" to="/create-game">
+            <button onClick={goToCreateGame}>start new game</button>
+          </Link>
         </div>
       </div>
       <div className="right-box">{gamesList}</div>
