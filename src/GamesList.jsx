@@ -30,7 +30,7 @@ class GamesList extends Component {
                 key={game.userWord}
                 {...game}
                 accounts={this.props.accounts}
-                liveGameContract={this.props.liveGameContract}
+                hangmanContract={this.props.hangmanContract}
                 web3={this.props.web3}
               />
             );

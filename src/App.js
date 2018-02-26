@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import HangmanContract from '../build/contracts/Hangman.json';
-import LiveGameContract from '../build/contracts/LiveGame.json';
 import getWeb3 from './utils/getWeb3';
 import GamesList from './GamesList';
 import CreateGame from './CreateGame';
@@ -24,12 +23,15 @@ class App extends Component {
       pendingGames: [],
       hangmanContract: undefined,
       account: undefined,
-      accounts: []
+      accounts: [],
+      liveGame: {}
     };
     this.addGameToGames = this.addGameToGames.bind(this);
     this.handlePendingGameResult = this.handlePendingGameResult.bind(this);
     this.handleNewGameResult = this.handleNewGameResult.bind(this);
+    this.handleLiveGameResult = this.handleLiveGameResult.bind(this);
     this.gameMaker = this.gameMaker.bind(this);
+    this.liveGameMaker = this.liveGameMaker.bind(this);
   }
 
   componentWillMount() {
@@ -67,37 +69,63 @@ class App extends Component {
     this.addGameToGames(game);
   }
   handleNewGameResult(newGame) {
+    console.log('new game ---> ', newGame);
     let game = this.gameMaker(newGame.args);
     this.addGameToGames(game);
   }
   gameMaker(game) {
     let userName = game.userName;
-    let word = game.word;
     let userWord = game.userWord;
     let wager = game.wager.c[0];
     let tries = game.tries.c[0];
+    let wordLength = game.wordLength.c[0];
+    let gameId = game.gameId.c[0];
     return {
-      word,
       wager,
       tries,
       userName,
-      userWord
+      userWord,
+      wordLength,
+      gameId
     };
+  }
+
+  liveGameMaker(game) {
+    let hangman = game.hangman;
+    let challenger = game.challenger;
+    let uniqGameString = game.uniqGameString;
+    let wager = game.wager.c[0];
+    let tries = game.tries.c[0];
+    let gameId = game.gameId.c[0];
+    let wordLength = game.wordLength.c[0];
+    return {
+      wager,
+      tries,
+      hangman,
+      challenger,
+      uniqGameString,
+      wordLength
+    };
+  }
+
+  handleLiveGameResult(liveGame) {
+    let game = this.liveGameMaker(liveGame.args);
+    this.setState({
+      liveGame: game
+    });
   }
 
   instantiateContract() {
     let self = this;
     const contract = require('truffle-contract');
     const Hangman = contract(HangmanContract);
-    const LiveGame = contract(LiveGameContract);
     Hangman.setProvider(this.state.web3.currentProvider);
-    LiveGame.setProvider(this.state.web3.currentProvider);
     this.setState({
-      hangmanContract: Hangman,
-      liveGameContract: LiveGame
+      hangmanContract: Hangman
     });
 
     let hangmanInstance;
+    let liveGameInstance;
 
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
@@ -107,12 +135,16 @@ class App extends Component {
           self.handlePendingGameResult(result);
         });
         hangmanInstance.NewGame(function(error, result) {
-          self.handlePendingGameResult(result);
+          self.handleNewGameResult(result);
         });
         hangmanInstance.getPendingGames({ from: accounts[0] });
         this.setState({
           account: accounts[0],
           accounts: accounts
+        });
+        hangmanInstance.GameStarted(function(error, result) {
+          console.log('i am the GameStarted result ---> ', result);
+          self.handleLiveGameResult(result);
         });
       });
     });
@@ -131,7 +163,6 @@ class App extends Component {
                 accounts={this.state.accounts}
                 web3={this.state.web3}
                 hangmanContract={this.state.hangmanContract}
-                liveGameContract={this.state.liveGameContract}
               />
             )}
           />
@@ -143,8 +174,7 @@ class App extends Component {
             path="/live-game/:id"
             component={props => {
               const routeId = props.match.params.id.trim();
-              console.log(routeId);
-              return <LiveGame />;
+              return <LiveGame {...this.state.liveGame} />;
             }}
           />
         </Switch>

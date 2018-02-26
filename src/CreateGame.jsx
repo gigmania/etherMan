@@ -24,15 +24,18 @@ class CreateGame extends Component {
     let hangmanInstance;
     let wager = new Number(this.state.wager).valueOf();
     let tries = new Number(this.state.tries).valueOf();
-    let word = this.state.word;
+    let word = this.state.word.trim();
     let userName = this.state.userName;
-    let userWord = word + wager + userName + tries;
+    let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
+    let wordLength = word.length;
     console.log('i am the state ---> ', this.state);
+    console.log('i am the userWord ---> ', userWord);
+    console.log(typeof userWord);
     this.props.hangmanContract
       .deployed()
       .then(function(instance) {
         hangmanInstance = instance;
-        return hangmanInstance.createGame(word, wager, tries, userWord, userName, {
+        return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
           from: account,
           gas: 3000000
         });

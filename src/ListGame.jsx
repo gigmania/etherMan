@@ -4,29 +4,29 @@ import { Link } from 'react-router-dom';
 const ListGame = props => {
   let frontEndId;
   let challenger = 'KeeneyBixby';
-  let { userName, word, wager, tries } = props;
-  console.log('i am the props ---> ', props);
+  let { userName, wordLength, wager, tries, userWord, gameId } = props;
+  // console.log('i am the props ---> ', props);
+  // console.log(typeof gameId);
 
   let startLiveGame = () => {
-    let liveGameInstance;
+    let hangmanInstance;
     let account = props.accounts[9];
-    let uniqGameString = word + wager + userName + tries + challenger;
-    frontEndId = userName + new Date().getTime() + challenger;
-    // props.liveGameContract
-    //   .deployed()
-    //   .then(function(instance) {
-    //     liveGameInstance = instance;
-    //     return liveGameInstance.startLiveGame(word, wager, tries, uniqGameString, userName, challenger, {
-    //       from: account,
-    //       gas: 3000000
-    //     });
-    //   })
-    //   .then(function(result) {
-    //     console.log('i am the result ---> ', result);
-    //   })
-    //   .catch(function(err) {
-    //     console.log(err);
-    //   });
+    frontEndId = `${tries}:${userName}${new Date().getTime()}${challenger}:000$${wager}`;
+    props.hangmanContract
+      .deployed()
+      .then(function(instance) {
+        hangmanInstance = instance;
+        return hangmanInstance.commenceLiveGame(challenger, gameId, frontEndId, wordLength, {
+          from: account,
+          gas: 3000000
+        });
+      })
+      .then(function(result) {
+        console.log('i am the result ---> ', result);
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
   };
   return (
     <div className="pending-game">
@@ -34,7 +34,7 @@ const ListGame = props => {
         <b> {userName} </b>
       </div>
       <div className="game-attr letters">
-        <b> {word.length} </b>
+        <b> {wordLength} </b>
       </div>
       <div className="game-attr wager">
         <b> {wager} </b>
@@ -46,7 +46,7 @@ const ListGame = props => {
         <Link
           className="game-route-btn"
           onClick={startLiveGame}
-          to={`/live-game/${userName}${new Date().getTime()}${challenger}`}
+          to={`/live-game/${tries}:${userName}${new Date().getTime()}${challenger}:000$${wager}`}
         >
           <button className="play-game__btn">PLAY</button>
         </Link>

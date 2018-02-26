@@ -1,0 +1,20 @@
+.live-game-title {
+  display: flex;
+  justify-content: center;
+}
+
+.live-game__vs {
+  margin: 0px 20px;
+}
+
+.live-game-solution {
+  display: flex;
+  justify-content: center;
+}
+
+.solution-letter {
+  height: 40px;
+  min-width: 40px;
+  margin: 0px 5px;
+  background-color: silver;
+}
