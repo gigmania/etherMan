@@ -10,24 +10,52 @@ class LiveGame extends Component {
     this.state = {
       misses: [],
       hits: [],
-      solution: []
+      solution: [],
+      guess: ''
     };
+    this.updateGuess = this.updateGuess.bind(this);
+    this.submitGuess = this.submitGuess.bind(this);
   }
   componentDidMount() {
-    if (this.props.wordLength) {
-      let wordLength = this.props.wordLength;
-      let hiddenWord = [];
-      while (wordLength > 0) {
-        hiddenWord.push('');
-        wordLength--;
-      }
+    if (this.props.solution) {
       this.setState({
-        solution: hiddenWord
+        solution: this.props.solution
       });
     }
   }
+  updateGuess(e) {
+    e.preventDefault();
+    this.setState({
+      guess: e.target.value
+    });
+  }
+  submitGuess(e) {
+    e.preventDefault();
+    let hangmanInstance;
+    let self = this;
+    console.log(this.props);
+    let account = this.props.accounts[5];
+    this.props.hangmanContract
+      .deployed()
+      .then(function(instance) {
+        hangmanInstance = instance;
+        return hangmanInstance.checkGuess(self.state.guess, self.props.gameId, {
+          from: account,
+          gas: 3000000
+        });
+      })
+      .then(function(result) {
+        console.log('i am the guesssssss result ---> ', result);
+        self.setState({
+          guess: ''
+        });
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+  }
   render() {
-    console.log('rednering liveGame');
+    console.log('rednering liveGame ---> ', this.props);
     return (
       <div className="main-box">
         <Header />
@@ -50,6 +78,18 @@ class LiveGame extends Component {
               </div>
             );
           })}
+        </div>
+        <div className="live-game-guess">
+          <input
+            id="guess__input"
+            type="text"
+            placeholder="Enter Letter or Word Guess Here"
+            value={this.state.guess}
+            onChange={this.updateGuess}
+          />
+          <button className="submit-guess__btn" onClick={this.submitGuess}>
+            Submit Guess
+          </button>
         </div>
       </div>
     );

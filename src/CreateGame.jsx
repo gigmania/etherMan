@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Header from './Header';
 
+import './css/createGame.css';
+
 class CreateGame extends Component {
   constructor(props) {
     super(props);

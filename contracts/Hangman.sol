@@ -5,6 +5,7 @@ contract Hangman {
   event NewGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
   event PendingGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
   event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 tries, string uniqGameString, uint8 wordLength);
+  event SolutionGuess(string guess, bool hit, uint32 index);
 
   struct Game {
     string word;
@@ -53,5 +54,19 @@ contract Hangman {
     string[] memory misses;
     uint id = activeGames.push(ActiveGame(gameWord, games[gameId].wager, games[gameId].tries, uniqGameString, games[gameId].userName, challenger, tries, hits, misses, wordLength)) - 1;
     GameStarted(challenger, games[gameId].userName, id, games[gameId].wager, tries, uniqGameString, wordLength);
+  }
+
+  function checkGuess(string guess, uint gameId) public {
+    bool isHit = false;
+    string memory gameWord = activeGames[gameId].word;
+    for (uint32 i = 0; i < bytes(gameWord).length; i++) {
+      if (bytes(gameWord)[i] == bytes(guess)[0]) {
+        isHit = true;
+        SolutionGuess(guess, true, i);
+      }
+    }
+    if (isHit == false) {
+      SolutionGuess(guess, false, 0);
+    }
   }
  }

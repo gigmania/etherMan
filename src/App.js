@@ -30,6 +30,7 @@ class App extends Component {
     this.handlePendingGameResult = this.handlePendingGameResult.bind(this);
     this.handleNewGameResult = this.handleNewGameResult.bind(this);
     this.handleLiveGameResult = this.handleLiveGameResult.bind(this);
+    this.handleGuessResult = this.handleGuessResult.bind(this);
     this.gameMaker = this.gameMaker.bind(this);
     this.liveGameMaker = this.liveGameMaker.bind(this);
   }
@@ -98,20 +99,41 @@ class App extends Component {
     let tries = game.tries.c[0];
     let gameId = game.gameId.c[0];
     let wordLength = game.wordLength.c[0];
+    let solution = [];
     return {
       wager,
       tries,
       hangman,
       challenger,
       uniqGameString,
-      wordLength
+      wordLength,
+      gameId,
+      solution
     };
   }
 
   handleLiveGameResult(liveGame) {
     let game = this.liveGameMaker(liveGame.args);
+    let wordLength = game.wordLength;
+    while (wordLength > 0) {
+      game.solution.push('');
+      wordLength--;
+    }
     this.setState({
       liveGame: game
+    });
+  }
+
+  handleGuessResult(guess) {
+    guess = guess.args;
+    let guessLetter = guess.guess.toUpperCase();
+    let letterIndex = guess.index.c[0];
+    let liveGame = this.state.liveGame;
+    if (guess.hit === true) {
+      liveGame.solution[letterIndex] = guessLetter;
+    }
+    this.setState({
+      liveGame: liveGame
     });
   }
 
@@ -125,7 +147,6 @@ class App extends Component {
     });
 
     let hangmanInstance;
-    let liveGameInstance;
 
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
@@ -145,6 +166,10 @@ class App extends Component {
         hangmanInstance.GameStarted(function(error, result) {
           console.log('i am the GameStarted result ---> ', result);
           self.handleLiveGameResult(result);
+        });
+        hangmanInstance.SolutionGuess(function(error, result) {
+          self.handleGuessResult(result);
+          console.log('i am the Solution Guess ---> ', result);
         });
       });
     });
@@ -174,7 +199,13 @@ class App extends Component {
             path="/live-game/:id"
             component={props => {
               const routeId = props.match.params.id.trim();
-              return <LiveGame {...this.state.liveGame} />;
+              return (
+                <LiveGame
+                  hangmanContract={this.state.hangmanContract}
+                  accounts={this.state.accounts}
+                  {...this.state.liveGame}
+                />
+              );
             }}
           />
         </Switch>

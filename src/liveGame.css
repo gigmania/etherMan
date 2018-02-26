@@ -10,11 +10,27 @@
 .live-game-solution {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .solution-letter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 40px;
   min-width: 40px;
   margin: 0px 5px;
   background-color: silver;
+  font-size: 24px;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+}
+
+.live-game-guess {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.submit-guess__btn {
+  margin-left: 15px;
 }

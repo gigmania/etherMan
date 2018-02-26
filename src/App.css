@@ -36,18 +36,6 @@ input {
   font-size: 16px;
 }
 
-.new-game-input {
-  margin-bottom: 10px;
-}
-
-.left-box {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
 .right-box {
   display: flex;
   flex-direction: row;
