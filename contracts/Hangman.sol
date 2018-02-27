@@ -74,6 +74,11 @@ contract Hangman {
     if (isSolution == true) {
       GameWinner(activeGames[gameId].challenger);
     }
+    if (isSolution == false) {
+      if (activeGames[gameId].tries >= activeGames[gameId].maxTries) {
+        GameWinner(activeGames[gameId].hangman);
+      }
+    }
   }
 
   function checkHanged(uint gameId, string guess) private {
