@@ -31,6 +31,10 @@
   margin-top: 20px;
 }
 
+.live-game-misses {
+  display: flex;
+  justify-content: center;
+}
 .submit-guess__btn {
   margin-left: 15px;
 }

@@ -33,8 +33,9 @@ class LiveGame extends Component {
     e.preventDefault();
     let hangmanInstance;
     let self = this;
-    console.log(this.props);
     let account = this.props.accounts[5];
+    let guess = self.state.guess.toLowerCase().trim();
+    let solutionString = this.props.solution.join('').trim();
     this.props.hangmanContract
       .deployed()
       .then(function(instance) {
@@ -56,6 +57,7 @@ class LiveGame extends Component {
   }
   render() {
     console.log('rednering liveGame ---> ', this.props);
+    let triesRemaining = this.props.maxTries - this.props.tries;
     return (
       <div className="main-box">
         <Header />
@@ -78,6 +80,9 @@ class LiveGame extends Component {
               </div>
             );
           })}
+        </div>
+        <div className="live-game-misses">
+          <h1> You have </h1> <h2> {triesRemaining} </h2> <h1> tries remaining. </h1>
         </div>
         <div className="live-game-guess">
           <input

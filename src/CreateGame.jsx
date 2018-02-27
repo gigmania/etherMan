@@ -26,7 +26,7 @@ class CreateGame extends Component {
     let hangmanInstance;
     let wager = new Number(this.state.wager).valueOf();
     let tries = new Number(this.state.tries).valueOf();
-    let word = this.state.word.trim();
+    let word = this.state.word.toLowerCase().trim();
     let userName = this.state.userName;
     let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
     let wordLength = word.length;

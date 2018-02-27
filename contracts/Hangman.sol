@@ -4,8 +4,9 @@ contract Hangman {
 
   event NewGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
   event PendingGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
-  event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 tries, string uniqGameString, uint8 wordLength);
+  event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
   event SolutionGuess(string guess, bool hit, uint32 index);
+  event GameWinner(string winner);
 
   struct Game {
     string word;
@@ -48,25 +49,57 @@ contract Hangman {
 
   function commenceLiveGame(string challenger, uint gameId, string uniqGameString, uint8 wordLength) public {
     string memory gameWord = games[gameId].word;
-    //string memory gameWord = idToWord[gameId];
     uint8 tries = 0;
     string[] memory hits;
     string[] memory misses;
+    /* uint memory hitsLength = hits.length; */
     uint id = activeGames.push(ActiveGame(gameWord, games[gameId].wager, games[gameId].tries, uniqGameString, games[gameId].userName, challenger, tries, hits, misses, wordLength)) - 1;
-    GameStarted(challenger, games[gameId].userName, id, games[gameId].wager, tries, uniqGameString, wordLength);
+    GameStarted(challenger, games[gameId].userName, id, games[gameId].wager, games[gameId].tries, uniqGameString, wordLength);
+    for (uint32 i = 0; i < wordLength; i++) {
+      activeGames[id].hits.push('$');
+    }
+  }
+
+  function checkSolved(uint gameId) private {
+    string memory gameWord = activeGames[gameId].word;
+    bool isSolution = true;
+    string memory letter;
+    for (uint32 i = 0; i < activeGames[gameId].hits.length; i++) {
+      letter = activeGames[gameId].hits[i];
+      if (bytes(letter)[0] != bytes(gameWord)[i]) {
+        isSolution = false;
+        break;
+      }
+    }
+    if (isSolution == true) {
+      GameWinner(activeGames[gameId].challenger);
+    }
+  }
+
+  function checkHanged(uint gameId, string guess) private {
+    if (activeGames[gameId].maxTries > activeGames[gameId].tries) {
+      SolutionGuess(guess, false, 0);
+    } else {
+      GameWinner(activeGames[gameId].hangman);
+    }
   }
 
   function checkGuess(string guess, uint gameId) public {
+    activeGames[gameId].tries++;
     bool isHit = false;
     string memory gameWord = activeGames[gameId].word;
     for (uint32 i = 0; i < bytes(gameWord).length; i++) {
       if (bytes(gameWord)[i] == bytes(guess)[0]) {
         isHit = true;
+        activeGames[gameId].hits[i] = guess;
         SolutionGuess(guess, true, i);
       }
     }
+    if (isHit == true) {
+      checkSolved(gameId);
+    }
     if (isHit == false) {
-      SolutionGuess(guess, false, 0);
+      checkHanged(gameId, guess);
     }
   }
  }

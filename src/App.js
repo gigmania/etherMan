@@ -96,19 +96,21 @@ class App extends Component {
     let challenger = game.challenger;
     let uniqGameString = game.uniqGameString;
     let wager = game.wager.c[0];
-    let tries = game.tries.c[0];
+    let maxTries = game.maxTries.c[0];
+    let tries = 0;
     let gameId = game.gameId.c[0];
     let wordLength = game.wordLength.c[0];
     let solution = [];
     return {
       wager,
-      tries,
+      maxTries,
       hangman,
       challenger,
       uniqGameString,
       wordLength,
       gameId,
-      solution
+      solution,
+      tries
     };
   }
 
@@ -129,6 +131,7 @@ class App extends Component {
     let guessLetter = guess.guess.toUpperCase();
     let letterIndex = guess.index.c[0];
     let liveGame = this.state.liveGame;
+    liveGame.tries++;
     if (guess.hit === true) {
       liveGame.solution[letterIndex] = guessLetter;
     }
@@ -164,12 +167,13 @@ class App extends Component {
           accounts: accounts
         });
         hangmanInstance.GameStarted(function(error, result) {
-          console.log('i am the GameStarted result ---> ', result);
           self.handleLiveGameResult(result);
         });
         hangmanInstance.SolutionGuess(function(error, result) {
           self.handleGuessResult(result);
-          console.log('i am the Solution Guess ---> ', result);
+        });
+        hangmanInstance.GameWinner(function(error, result) {
+          console.log('I am the GAME WINNER ---> ', result);
         });
       });
     });
