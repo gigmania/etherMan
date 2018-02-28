@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import Header from './Header';
+import Header from '../Header/Header';
 
-import './css/createGame.css';
+import './createGame.css';
 
 class CreateGame extends Component {
   constructor(props) {

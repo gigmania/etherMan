@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import ListGame from './ListGame';
+import ListGame from '../ListGame/ListGame';
+import Header from '../Header/Header';
+
+import './gamesList.css';
 
 class GamesList extends Component {
   constructor(props) {
@@ -51,11 +54,7 @@ class GamesList extends Component {
     }
     return (
       <div>
-        <nav className="navbar pure-menu pure-menu-horizontal">
-          <a href="#" className="pure-menu-heading pure-menu-link">
-            ETHERMAN
-          </a>
-        </nav>
+        <Header />
         <div className="header-title flex-justify">
           <div className="games-list-title">
             <h1>Etherman</h1>

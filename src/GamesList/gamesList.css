@@ -1,0 +1,30 @@
+.pending-games {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+}
+
+.pending-games__header {
+  display: flex;
+  flex-direction: row;
+  background-color: linen;
+  height: 35px;
+}
+
+.header-title {
+  display: flex;
+  flex-direction: row;
+}
+
+.wager {
+  flex-basis: 20%;
+}
+.user {
+  flex-basis: 20%;
+}
+.letters {
+  flex-basis: 20%;
+}
+.tries {
+  flex-basis: 20%;
+}

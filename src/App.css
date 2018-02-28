@@ -42,12 +42,6 @@ input {
   flex-basis: 100%;
 }
 
-.pending-games {
-  display: flex;
-  flex-direction: column;
-  flex-basis: 100%;
-}
-
 .pending-game {
   display: flex;
   flex-direction: row;
@@ -69,13 +63,6 @@ input {
   flex-direction: row;
 }
 
-.pending-games__header {
-  display: flex;
-  flex-direction: row;
-  background-color: linen;
-  height: 35px;
-}
-
 .games-list-title {
   display: flex;
   flex-direction: row;
@@ -84,24 +71,6 @@ input {
 .flex-justify {
   justify-content: space-between;
   align-items: center;
-}
-
-.header-title {
-  display: flex;
-  flex-direction: row;
-}
-
-.wager {
-  flex-basis: 20%;
-}
-.user {
-  flex-basis: 20%;
-}
-.letters {
-  flex-basis: 20%;
-}
-.tries {
-  flex-basis: 20%;
 }
 
 .container {

@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import HangmanContract from '../build/contracts/Hangman.json';
 import getWeb3 from './utils/getWeb3';
-import GamesList from './GamesList';
-import CreateGame from './CreateGame';
-import ListGame from './ListGame';
-import LiveGame from './LiveGame';
+import GamesList from './GamesList/GamesList';
+import CreateGame from './CreateGame/CreateGame';
+import ListGame from './ListGame/ListGame';
+import LiveGame from './LiveGame/LiveGame';
 
 import './css/oswald.css';
 import './css/open-sans.css';
