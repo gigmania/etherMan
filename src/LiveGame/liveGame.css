@@ -11,6 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 15px;
 }
 
 .solution-letter {
@@ -28,13 +29,38 @@
 .live-game-guess {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 30px;
+}
+
+.live-game-tries {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
 .live-game-misses {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
+
+.misses-letter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  min-width: 40px;
+  margin: 0px 5px;
+  border-bottom: 2px silver solid;
+  color: red;
+  font-size: 24px;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+}
+
+.chances-remaining {
+  margin: 0px 7px;
+}
+
 .submit-guess__btn {
   margin-left: 15px;
 }

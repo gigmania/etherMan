@@ -11,15 +11,17 @@ class LiveGame extends Component {
       misses: [],
       hits: [],
       solution: [],
-      guess: ''
+      guess: '',
+      hangman: ''
     };
     this.updateGuess = this.updateGuess.bind(this);
     this.submitGuess = this.submitGuess.bind(this);
   }
   componentDidMount() {
-    if (this.props.solution) {
+    if (this.props.hangmanContract && this.props.solution && this.props.misses) {
       this.setState({
-        solution: this.props.solution
+        solution: this.props.solution,
+        misses: this.props.misses
       });
     }
   }
@@ -56,7 +58,7 @@ class LiveGame extends Component {
       });
   }
   render() {
-    console.log('rednering liveGame ---> ', this.props);
+    //console.log('rednering liveGame ---> ', this.props);
     let triesRemaining = this.props.maxTries - this.props.tries;
     return (
       <div className="main-box">
@@ -81,8 +83,17 @@ class LiveGame extends Component {
             );
           })}
         </div>
+        <div className="live-game-tries">
+          <h1> You have </h1> <h2 className="chances-remaining"> {triesRemaining} </h2> <h1> tries remaining. </h1>
+        </div>
         <div className="live-game-misses">
-          <h1> You have </h1> <h2> {triesRemaining} </h2> <h1> tries remaining. </h1>
+          {this.state.misses.map((miss, index) => {
+            return (
+              <div className="misses-letter" key={index}>
+                {miss}
+              </div>
+            );
+          })}
         </div>
         <div className="live-game-guess">
           <input

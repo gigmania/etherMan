@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import './listGame.css';
+
 const ListGame = props => {
   let frontEndId;
   let challenger = 'KeeneyBixby';
@@ -10,7 +12,7 @@ const ListGame = props => {
 
   let startLiveGame = () => {
     let hangmanInstance;
-    let account = props.accounts[9];
+    let account = props.accounts[5];
     frontEndId = `${tries}:${userName}${new Date().getTime()}${challenger}:000$${wager}`;
     props.hangmanContract
       .deployed()

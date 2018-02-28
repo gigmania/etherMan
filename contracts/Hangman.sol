@@ -7,6 +7,9 @@ contract Hangman {
   event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
   event SolutionGuess(string guess, bool hit, uint32 index);
   event GameWinner(string winner);
+  event ActiveGameDetails(string challenger, string hangman, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength, uint8 tries, uint gameId);
+  event SolutionCheck(string letter, uint32 index);
+  event MissesCheck(string letter, uint32 index);
 
   struct Game {
     string word;
@@ -33,6 +36,41 @@ contract Hangman {
   Game[] public games;
   ActiveGame[] public activeGames;
   mapping(uint => string) public idToWord;
+  mapping(address => uint) public activeGamesMap;
+
+  function checkSendHits() private {
+    string memory holder = '$';
+    for (uint32 i = 0; i < activeGames[activeGamesMap[msg.sender]].hits.length; i++) {
+      if (bytes(activeGames[activeGamesMap[msg.sender]].hits[i])[0] != bytes(holder)[0]) {
+        SolutionCheck(activeGames[activeGamesMap[msg.sender]].hits[i], i);
+      }
+    }
+  }
+
+  function checkSendMisses() private {
+    for (uint32 i = 0; i < activeGames[activeGamesMap[msg.sender]].misses.length; i++) {
+      MissesCheck(activeGames[activeGamesMap[msg.sender]].misses[i], i);
+    }
+  }
+
+  function getMapIndex(address challenger) private view returns(uint) {
+    return activeGamesMap[challenger];
+  }
+
+  function getActiveGame() public {
+    uint gameId = getMapIndex(msg.sender);
+    ActiveGameDetails(activeGames[activeGamesMap[msg.sender]].challenger,
+      activeGames[activeGamesMap[msg.sender]].hangman,
+      activeGames[activeGamesMap[msg.sender]].wager,
+      activeGames[activeGamesMap[msg.sender]].maxTries,
+      activeGames[activeGamesMap[msg.sender]].uniqGameString,
+      activeGames[activeGamesMap[msg.sender]].wordLength,
+      activeGames[activeGamesMap[msg.sender]].tries,
+      gameId
+    );
+    checkSendHits();
+    checkSendMisses();
+  }
 
   function createGame(string _word, uint8 _wager, uint8 _tries, string _userWord, string _userName, uint8 _wordLength) public {
     uint id = games.push(Game(_word, _wager, _tries, _userWord, _userName, _wordLength)) - 1;
@@ -47,17 +85,25 @@ contract Hangman {
     }
   }
 
+  function mapLiveGameToAddress(uint gameIndex) private {
+    activeGamesMap[msg.sender] = gameIndex;
+  }
+
+  function initSolutionArray(uint8 wordLength, uint gameIndex) private {
+    for (uint32 i = 0; i < wordLength; i++) {
+      activeGames[gameIndex].hits.push('$');
+    }
+  }
+
   function commenceLiveGame(string challenger, uint gameId, string uniqGameString, uint8 wordLength) public {
     string memory gameWord = games[gameId].word;
     uint8 tries = 0;
     string[] memory hits;
     string[] memory misses;
-    /* uint memory hitsLength = hits.length; */
     uint id = activeGames.push(ActiveGame(gameWord, games[gameId].wager, games[gameId].tries, uniqGameString, games[gameId].userName, challenger, tries, hits, misses, wordLength)) - 1;
     GameStarted(challenger, games[gameId].userName, id, games[gameId].wager, games[gameId].tries, uniqGameString, wordLength);
-    for (uint32 i = 0; i < wordLength; i++) {
-      activeGames[id].hits.push('$');
-    }
+    initSolutionArray(wordLength, id);
+    mapLiveGameToAddress(id);
   }
 
   function checkSolved(uint gameId) private {
@@ -84,6 +130,7 @@ contract Hangman {
   function checkHanged(uint gameId, string guess) private {
     if (activeGames[gameId].maxTries > activeGames[gameId].tries) {
       SolutionGuess(guess, false, 0);
+      activeGames[gameId].misses.push(guess);
     } else {
       GameWinner(activeGames[gameId].hangman);
     }

@@ -1,0 +1,11 @@
+.pending-game {
+  display: flex;
+  flex-direction: row;
+  height: 35px;
+  padding: 7px 2px;
+}
+
+.game-attr {
+  display: flex;
+  flex-direction: row;
+}

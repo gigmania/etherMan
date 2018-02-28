@@ -31,8 +31,13 @@ class App extends Component {
     this.handleNewGameResult = this.handleNewGameResult.bind(this);
     this.handleLiveGameResult = this.handleLiveGameResult.bind(this);
     this.handleGuessResult = this.handleGuessResult.bind(this);
+    this.handleWinnerResult = this.handleWinnerResult.bind(this);
     this.gameMaker = this.gameMaker.bind(this);
     this.liveGameMaker = this.liveGameMaker.bind(this);
+  }
+
+  componentDidMount() {
+    console.log('app component mountimg');
   }
 
   componentWillMount() {
@@ -98,9 +103,16 @@ class App extends Component {
     let wager = game.wager.c[0];
     let maxTries = game.maxTries.c[0];
     let tries = 0;
-    let gameId = game.gameId.c[0];
+    if (game.tries) {
+      tries = game.tries.c[0];
+    }
+    let gameId;
+    if (game.gameId) {
+      gameId = game.gameId.c[0];
+    }
     let wordLength = game.wordLength.c[0];
     let solution = [];
+    let misses = [];
     return {
       wager,
       maxTries,
@@ -110,6 +122,7 @@ class App extends Component {
       wordLength,
       gameId,
       solution,
+      misses,
       tries
     };
   }
@@ -126,6 +139,28 @@ class App extends Component {
     });
   }
 
+  handleSolutionCheck(letter) {
+    letter = letter.args;
+    let solutionLetter = letter.letter.toUpperCase();
+    let letterIndex = letter.index.c[0];
+    let liveGame = this.state.liveGame;
+    liveGame.solution[letterIndex] = solutionLetter;
+    this.setState({
+      liveGame: liveGame
+    });
+  }
+
+  handleMissesCheck(letter) {
+    letter = letter.args;
+    let missesLetter = letter.letter.toUpperCase();
+    let letterIndex = letter.index.c[0];
+    let liveGame = this.state.liveGame;
+    liveGame.misses.push(missesLetter);
+    this.setState({
+      liveGame: liveGame
+    });
+  }
+
   handleGuessResult(guess) {
     guess = guess.args;
     let guessLetter = guess.guess.toUpperCase();
@@ -135,9 +170,37 @@ class App extends Component {
     if (guess.hit === true) {
       liveGame.solution[letterIndex] = guessLetter;
     }
+    if (guess.hit === false) {
+      liveGame.misses.push(guessLetter);
+    }
     this.setState({
       liveGame: liveGame
     });
+  }
+
+  handleWinnerResult(gameWinner) {
+    let winner = gameWinner.args;
+    console.log(winner);
+  }
+
+  checkGetLiveGame() {
+    if (this.state.liveGame.hangman == null) {
+      let hangmanInstance;
+      let account = this.state.accounts[5];
+      let time = new Date().getTime();
+      this.state.hangmanContract
+        .deployed()
+        .then(function(instance) {
+          hangmanInstance = instance;
+          return hangmanInstance.getActiveGame({
+            from: account,
+            gas: 3000000
+          });
+        })
+        .catch(function(err) {
+          console.log(err);
+        });
+    }
   }
 
   instantiateContract() {
@@ -161,7 +224,12 @@ class App extends Component {
         hangmanInstance.NewGame(function(error, result) {
           self.handleNewGameResult(result);
         });
-        hangmanInstance.getPendingGames({ from: accounts[0] });
+        hangmanInstance.getPendingGames({ from: accounts[0] }).then(function(result) {
+          hangmanInstance.getActiveGame({
+            from: self.state.accounts[5],
+            gas: 3000000
+          });
+        });
         this.setState({
           account: accounts[0],
           accounts: accounts
@@ -173,7 +241,17 @@ class App extends Component {
           self.handleGuessResult(result);
         });
         hangmanInstance.GameWinner(function(error, result) {
+          self.handleWinnerResult(result);
           console.log('I am the GAME WINNER ---> ', result);
+        });
+        hangmanInstance.ActiveGameDetails(function(error, result) {
+          self.handleLiveGameResult(result);
+        });
+        hangmanInstance.SolutionCheck(function(error, result) {
+          self.handleSolutionCheck(result);
+        });
+        hangmanInstance.MissesCheck(function(error, result) {
+          self.handleMissesCheck(result);
         });
       });
     });
