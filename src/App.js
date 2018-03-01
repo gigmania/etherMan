@@ -191,7 +191,14 @@ class App extends Component {
 
   handleWinnerResult(gameWinner) {
     let winner = gameWinner.args;
-    console.log(winner);
+    let game = this.state.liveGame;
+    game.solved = true;
+    game.word = winner.word;
+    game.winner = winner.winner;
+    game.loser = winner.loser;
+    this.setState({
+      liveGame: game
+    });
   }
 
   checkGetLiveGame() {

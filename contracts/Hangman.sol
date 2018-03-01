@@ -6,7 +6,7 @@ contract Hangman {
   event PendingGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
   event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
   event SolutionGuess(string guess, bool hit, uint32 index);
-  event GameWinner(string winner);
+  event GameWinner(string winner, string word, string loser);
   event ActiveGameDetails(string challenger, string hangman, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength, uint8 tries, uint gameId);
   event SolutionCheck(string letter, uint32 index);
   event MissesCheck(string letter, uint32 index);
@@ -142,11 +142,11 @@ contract Hangman {
       }
     }
     if (isSolution == true) {
-      GameWinner(activeGames[gameId].challenger);
+      GameWinner(activeGames[gameId].challenger, activeGames[gameId].word, activeGames[gameId].hangman);
     }
     if (isSolution == false) {
       if (activeGames[gameId].tries >= activeGames[gameId].maxTries) {
-        GameWinner(activeGames[gameId].hangman);
+        GameWinner(activeGames[gameId].hangman, activeGames[gameId].word, activeGames[gameId].challenger);
       }
     }
   }
@@ -156,7 +156,26 @@ contract Hangman {
       SolutionGuess(guess, false, 0);
       activeGames[gameId].misses.push(guess);
     } else {
-      GameWinner(activeGames[gameId].hangman);
+      GameWinner(activeGames[gameId].hangman, activeGames[gameId].word, activeGames[gameId].challenger);
+    }
+  }
+
+  function checkWordGuess(string guess, uint gameId) private {
+    string memory gameWord = activeGames[gameId].word;
+    bool isSolved = true;
+    if (bytes(gameWord).length == bytes(guess).length) {
+      for (uint32 i = 0; i < bytes(gameWord).length; i++) {
+        if (bytes(gameWord)[i] != bytes(guess)[i]) {
+          isSolved = false;
+          checkHanged(gameId, guess);
+          break;
+        }
+      }
+      if (isSolved == true) {
+        GameWinner(activeGames[gameId].challenger, activeGames[gameId].word, activeGames[gameId].hangman);
+      }
+    } else {
+      checkHanged(gameId, guess);
     }
   }
 
@@ -164,18 +183,22 @@ contract Hangman {
     activeGames[gameId].tries++;
     bool isHit = false;
     string memory gameWord = activeGames[gameId].word;
-    for (uint32 i = 0; i < bytes(gameWord).length; i++) {
-      if (bytes(gameWord)[i] == bytes(guess)[0]) {
-        isHit = true;
-        activeGames[gameId].hits[i] = guess;
-        SolutionGuess(guess, true, i);
+    if (bytes(guess).length > 1) {
+      checkWordGuess(guess, gameId);
+    } else if (bytes(guess).length == 1) {
+      for (uint32 i = 0; i < bytes(gameWord).length; i++) {
+        if (bytes(gameWord)[i] == bytes(guess)[0]) {
+          isHit = true;
+          activeGames[gameId].hits[i] = guess;
+          SolutionGuess(guess, true, i);
+        }
       }
-    }
-    if (isHit == true) {
-      checkSolved(gameId);
-    }
-    if (isHit == false) {
-      checkHanged(gameId, guess);
+      if (isHit == true) {
+        checkSolved(gameId);
+      }
+      if (isHit == false) {
+        checkHanged(gameId, guess);
+      }
     }
   }
  }

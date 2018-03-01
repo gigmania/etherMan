@@ -58,7 +58,6 @@ class LiveGame extends Component {
       });
   }
   render() {
-    //console.log('rednering liveGame ---> ', this.props);
     let triesRemaining = this.props.maxTries - this.props.tries;
     return (
       <div className="main-box">
