@@ -69,9 +69,24 @@ class App extends Component {
       });
     }
   }
+  handlePendingGameRemoval(uniq) {
+    let pendingGames = this.state.pendingGames;
+    for (let i = 0; i < pendingGames.length; i++) {
+      console.log(pendingGames[i].userWord);
+      if (pendingGames[i].userWord === uniq.userWord) {
+        console.log('splicing');
+        pendingGames.splice(i, 1);
+        break;
+      }
+    }
+    console.log('i am the uniq ---> ', uniq);
+    console.log('i am the pending games ---> ', pendingGames);
+    this.setState({
+      pendingGames: pendingGames
+    });
+  }
   handlePendingGameResult(pendingGame) {
     let game = this.gameMaker(pendingGame.args);
-    //console.log(pendingGame);
     this.addGameToGames(game);
   }
   handleNewGameResult(newGame) {
@@ -252,6 +267,9 @@ class App extends Component {
         });
         hangmanInstance.MissesCheck(function(error, result) {
           self.handleMissesCheck(result);
+        });
+        hangmanInstance.RemovePendingGame(function(error, result) {
+          self.handlePendingGameRemoval(result.args);
         });
       });
     });

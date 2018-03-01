@@ -10,6 +10,9 @@ contract Hangman {
   event ActiveGameDetails(string challenger, string hangman, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength, uint8 tries, uint gameId);
   event SolutionCheck(string letter, uint32 index);
   event MissesCheck(string letter, uint32 index);
+  event RemovePendingGame(string userWord);
+
+  uint32 gamesArrayGaps = 0;
 
   struct Game {
     string word;
@@ -73,7 +76,19 @@ contract Hangman {
   }
 
   function createGame(string _word, uint8 _wager, uint8 _tries, string _userWord, string _userName, uint8 _wordLength) public {
-    uint id = games.push(Game(_word, _wager, _tries, _userWord, _userName, _wordLength)) - 1;
+    uint id;
+    if (gamesArrayGaps < 1) {
+      id = games.push(Game(_word, _wager, _tries, _userWord, _userName, _wordLength)) - 1;
+    } else {
+      for (uint32 i = 0; i < games.length; i++) {
+        if (games[i].wordLength == 0) {
+          games[i] = Game(_word, _wager, _tries, _userWord, _userName, _wordLength);
+          id = i;
+          gamesArrayGaps--;
+          break;
+        }
+      }
+    }
     idToWord[id] = _word;
     NewGame(id, _wager, _tries, _userName, _userWord, _wordLength);
   }
@@ -81,7 +96,9 @@ contract Hangman {
   function getPendingGames() public {
     require(games.length > 0);
     for(uint i = 0; i < games.length; i++) {
-      PendingGame(i, games[i].wager, games[i].tries, games[i].userName, games[i].userWord, games[i].wordLength);
+      if (games[i].wordLength > 0) {
+        PendingGame(i, games[i].wager, games[i].tries, games[i].userName, games[i].userWord, games[i].wordLength);
+      }
     }
   }
 
@@ -95,6 +112,12 @@ contract Hangman {
     }
   }
 
+  function removeGameFromPending(uint gameId) private {
+    RemovePendingGame(games[gameId].userWord);
+    delete games[gameId];
+    gamesArrayGaps++;
+  }
+
   function commenceLiveGame(string challenger, uint gameId, string uniqGameString, uint8 wordLength) public {
     string memory gameWord = games[gameId].word;
     uint8 tries = 0;
@@ -104,6 +127,7 @@ contract Hangman {
     GameStarted(challenger, games[gameId].userName, id, games[gameId].wager, games[gameId].tries, uniqGameString, wordLength);
     initSolutionArray(wordLength, id);
     mapLiveGameToAddress(id);
+    removeGameFromPending(gameId);
   }
 
   function checkSolved(uint gameId) private {
