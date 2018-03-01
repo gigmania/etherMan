@@ -46,7 +46,7 @@ const ListGame = props => {
       </div>
       <div className="game-attr play-game">
         <Link
-          className="game-route-btn"
+          className="react-link-btn"
           onClick={startLiveGame}
           to={`/live-game/${tries}:${userName}${new Date().getTime()}${challenger}:000$${wager}`}
         >

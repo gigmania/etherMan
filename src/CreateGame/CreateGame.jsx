@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
+
 import Header from '../Header/Header';
 
 import './createGame.css';
@@ -20,7 +22,6 @@ class CreateGame extends Component {
   }
 
   createNewGame(e) {
-    e.preventDefault();
     let self = this;
     let account = this.props.accounts[0];
     let hangmanInstance;
@@ -30,9 +31,6 @@ class CreateGame extends Component {
     let userName = this.state.userName;
     let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
     let wordLength = word.length;
-    console.log('i am the state ---> ', this.state);
-    console.log('i am the userWord ---> ', userWord);
-    console.log(typeof userWord);
     this.props.hangmanContract
       .deployed()
       .then(function(instance) {
@@ -40,15 +38,6 @@ class CreateGame extends Component {
         return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
           from: account,
           gas: 3000000
-        });
-      })
-      .then(function(result) {
-        console.log('i am the result ---> ', result);
-        self.setState({
-          userName: '',
-          word: '',
-          wager: undefined,
-          tries: undefined
         });
       })
       .catch(function(err) {
@@ -131,9 +120,9 @@ class CreateGame extends Component {
             />
           </div>
           <div className="start-game">
-            <button className="start-game__btn" onClick={this.createNewGame}>
-              Create Game
-            </button>
+            <Link className="react-link-btn" onClick={this.createNewGame} to="/">
+              <button className="start-game__btn">Create Game</button>
+            </Link>
           </div>
         </div>
       </div>

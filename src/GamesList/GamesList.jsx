@@ -61,7 +61,7 @@ class GamesList extends Component {
             <h2>A PvP game of Hangman for Ether</h2>
           </div>
           <div className="create-new-game">
-            <Link className="game-route-btn" to="/create-game">
+            <Link className="react-link-btn" to="/create-game">
               <button>start new game</button>
             </Link>
           </div>

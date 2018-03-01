@@ -74,13 +74,10 @@ class App extends Component {
     for (let i = 0; i < pendingGames.length; i++) {
       console.log(pendingGames[i].userWord);
       if (pendingGames[i].userWord === uniq.userWord) {
-        console.log('splicing');
         pendingGames.splice(i, 1);
         break;
       }
     }
-    console.log('i am the uniq ---> ', uniq);
-    console.log('i am the pending games ---> ', pendingGames);
     this.setState({
       pendingGames: pendingGames
     });
@@ -90,7 +87,6 @@ class App extends Component {
     this.addGameToGames(game);
   }
   handleNewGameResult(newGame) {
-    console.log('new game ---> ', newGame);
     let game = this.gameMaker(newGame.args);
     this.addGameToGames(game);
   }
