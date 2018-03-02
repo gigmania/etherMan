@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Header from '../Header/Header';
+import EndGame from '../EndGame/EndGame';
 
 import './liveGame.css';
 
@@ -60,7 +61,7 @@ class LiveGame extends Component {
     let triesRemaining = this.props.maxTries - this.props.tries;
     let liveGameBody;
     if (this.props.solved === true) {
-      liveGameBody = <h1> We Have a Winner </h1>;
+      liveGameBody = <EndGame {...this.props} />;
     } else {
       liveGameBody = (
         <div className="live-game-box">
