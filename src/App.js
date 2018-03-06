@@ -178,7 +178,7 @@ class App extends Component {
     let guessLetter = guess.guess.toUpperCase();
     let letterIndex = guess.index.c[0];
     let liveGame = this.state.liveGame;
-    liveGame.tries++;
+    liveGame.tries = guess.tries;
     if (guess.hit === true) {
       liveGame.solution[letterIndex] = guessLetter;
     }
@@ -227,6 +227,7 @@ class App extends Component {
     const contract = require('truffle-contract');
     const Hangman = contract(HangmanContract);
     Hangman.setProvider(this.state.web3.currentProvider);
+    console.log(this.state.web3.eth.getBalance('0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f'));
     this.setState({
       hangmanContract: Hangman
     });
@@ -237,7 +238,7 @@ class App extends Component {
     this.state.web3.eth.getAccounts((error, accounts) => {
       this.state.hangmanContract.deployed().then(instance => {
         hangmanInstance = instance;
-        hangmanInstance.PendingGame(function(error, result) {
+        hangmanInstance.PendingGames(function(error, result) {
           self.handlePendingGameResult(result);
         });
         hangmanInstance.NewGame(function(error, result) {
@@ -261,7 +262,6 @@ class App extends Component {
         });
         hangmanInstance.GameWinner(function(error, result) {
           self.handleWinnerResult(result);
-          console.log('I am the GAME WINNER ---> ', result);
         });
         hangmanInstance.ActiveGameDetails(function(error, result) {
           self.handleLiveGameResult(result);
@@ -277,6 +277,9 @@ class App extends Component {
         });
         hangmanInstance.FundTransfer(function(error, result) {
           console.log('funds transferred ---> ', result);
+        });
+        hangmanInstance.WinnerPaid(function(error, result) {
+          console.log('winner paid ---> ', result);
         });
       });
     });

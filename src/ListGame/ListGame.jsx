@@ -7,28 +7,31 @@ const ListGame = props => {
   let frontEndId;
   let challenger = 'KeeneyBixby';
   let { userName, wordLength, wager, tries, userWord, gameId } = props;
-  // console.log('i am the props ---> ', props);
-  // console.log(typeof gameId);
 
   let startLiveGame = () => {
     let hangmanInstance;
     let account = props.accounts[5];
+    let balance = props.web3.eth.getBalance(account);
+    balance = balance.c[0];
     frontEndId = `${tries}:${userName}${new Date().getTime()}${challenger}:000$${wager}`;
-    props.hangmanContract
-      .deployed()
-      .then(function(instance) {
-        hangmanInstance = instance;
-        return hangmanInstance.commenceLiveGame(challenger, gameId, frontEndId, wordLength, {
-          from: account,
-          gas: 3000000
+    if (balance >= wager) {
+      props.hangmanContract
+        .deployed()
+        .then(function(instance) {
+          hangmanInstance = instance;
+          return hangmanInstance.commenceLiveGame(challenger, gameId, frontEndId, wordLength, {
+            from: account,
+            gas: 3000000,
+            value: wager
+          });
+        })
+        .then(function(result) {
+          console.log('i am the result ---> ', result);
+        })
+        .catch(function(err) {
+          console.log(err);
         });
-      })
-      .then(function(result) {
-        console.log('i am the result ---> ', result);
-      })
-      .catch(function(err) {
-        console.log(err);
-      });
+    }
   };
   return (
     <div className="pending-game">
