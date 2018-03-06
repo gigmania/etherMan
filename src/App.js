@@ -237,7 +237,7 @@ class App extends Component {
     this.state.web3.eth.getAccounts((error, accounts) => {
       this.state.hangmanContract.deployed().then(instance => {
         hangmanInstance = instance;
-        hangmanInstance.PendingGame(function(error, result) {
+        hangmanInstance.PendingGames(function(error, result) {
           self.handlePendingGameResult(result);
         });
         hangmanInstance.NewGame(function(error, result) {
