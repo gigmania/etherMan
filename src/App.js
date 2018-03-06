@@ -173,14 +173,6 @@ class App extends Component {
     });
   }
 
-  // handleTries(tries) {
-  //   let liveGame = this.state.liveGame;
-  //   liveGame.tries = tries.tries;
-  //   this.setState({
-  //     liveGame: liveGame
-  //   });
-  // }
-
   handleGuessResult(guess) {
     guess = guess.args;
     let guessLetter = guess.guess.toUpperCase();
@@ -235,6 +227,7 @@ class App extends Component {
     const contract = require('truffle-contract');
     const Hangman = contract(HangmanContract);
     Hangman.setProvider(this.state.web3.currentProvider);
+    console.log(this.state.web3.eth.getBalance('0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f'));
     this.setState({
       hangmanContract: Hangman
     });
@@ -282,11 +275,11 @@ class App extends Component {
         hangmanInstance.RemovePendingGame(function(error, result) {
           self.handlePendingGameRemoval(result.args);
         });
-        // hangmanInstance.IncrementTries(function(error, result) {
-        //   self.handleTries(result.args);
-        // });
         hangmanInstance.FundTransfer(function(error, result) {
           console.log('funds transferred ---> ', result);
+        });
+        hangmanInstance.WinnerPaid(function(error, result) {
+          console.log('winner paid ---> ', result);
         });
       });
     });

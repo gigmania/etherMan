@@ -20,9 +20,6 @@ class CreateGame extends Component {
     this.updateWord = this.updateWord.bind(this);
     this.createNewGame = this.createNewGame.bind(this);
   }
-  componentWillMount() {
-    console.log(this.props.web3.eth.getBalance('0x345ca3e014aaf5dca488057592ee47305d9b3e10'));
-  }
 
   createNewGame(e) {
     let self = this;
@@ -31,7 +28,6 @@ class CreateGame extends Component {
     let balance = this.props.web3.eth.getBalance(account);
     balance = balance.c[0];
     let wager = new Number(this.state.wager).valueOf();
-    console.log(wager);
     if (balance >= wager) {
       let tries = new Number(this.state.tries).valueOf();
       let word = this.state.word.toLowerCase().trim();
