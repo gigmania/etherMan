@@ -94,6 +94,7 @@ class App extends Component {
     let userName = game.userName;
     let userWord = game.userWord;
     let wager = game.wager.c[0];
+    console.log(game);
     let tries = game.tries.c[0];
     let wordLength = game.wordLength.c[0];
     let gameId = game.gameId.c[0];
@@ -274,6 +275,9 @@ class App extends Component {
         hangmanInstance.RemovePendingGame(function(error, result) {
           self.handlePendingGameRemoval(result.args);
         });
+        hangmanInstance.FundTransfer(function(error, result) {
+          console.log('funds transferred ---> ', result);
+        });
       });
     });
   }
@@ -296,7 +300,13 @@ class App extends Component {
           />
           <Route
             path="/create-game"
-            component={() => <CreateGame accounts={this.state.accounts} hangmanContract={this.state.hangmanContract} />}
+            component={() => (
+              <CreateGame
+                accounts={this.state.accounts}
+                hangmanContract={this.state.hangmanContract}
+                web3={this.state.web3}
+              />
+            )}
           />
           <Route
             path="/live-game/:id"

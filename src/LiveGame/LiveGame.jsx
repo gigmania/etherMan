@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Header from '../Header/Header';
+import EndGame from '../EndGame/EndGame';
 
 import './liveGame.css';
 
@@ -9,7 +10,6 @@ class LiveGame extends Component {
 
     this.state = {
       misses: [],
-      hits: [],
       solution: [],
       guess: '',
       hangman: ''
@@ -59,6 +59,53 @@ class LiveGame extends Component {
   }
   render() {
     let triesRemaining = this.props.maxTries - this.props.tries;
+    let liveGameBody;
+    if (this.props.solved === true) {
+      liveGameBody = <EndGame {...this.props} />;
+    } else {
+      liveGameBody = (
+        <div className="live-game-box">
+          <div className="live-game-title">
+            <h1>{this.props.hangman}</h1>
+            <h2 className="live-game__vs"> vs </h2>
+            <h1>{this.props.challenger}</h1>
+          </div>
+          <div className="live-game-solution">
+            {this.state.solution.map((letter, index) => {
+              return (
+                <div className="solution-letter" key={index}>
+                  {letter}
+                </div>
+              );
+            })}
+          </div>
+          <div className="live-game-tries">
+            <h1> You have </h1> <h2 className="chances-remaining"> {triesRemaining} </h2> <h1> tries remaining. </h1>
+          </div>
+          <div className="live-game-misses">
+            {this.state.misses.map((miss, index) => {
+              return (
+                <div className="misses-letter" key={index}>
+                  {miss}
+                </div>
+              );
+            })}
+          </div>
+          <div className="live-game-guess">
+            <input
+              id="guess__input"
+              type="text"
+              placeholder="Enter Letter or Word Guess Here"
+              value={this.state.guess}
+              onChange={this.updateGuess}
+            />
+            <button className="submit-guess__btn" onClick={this.submitGuess}>
+              Submit Guess
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="main-box">
         <Header />
@@ -68,44 +115,7 @@ class LiveGame extends Component {
             <h2>A PvP game of Hangman for Ether</h2>
           </div>
         </div>
-        <div className="live-game-title">
-          <h1>{this.props.hangman}</h1>
-          <h2 className="live-game__vs"> vs </h2>
-          <h1>{this.props.challenger}</h1>
-        </div>
-        <div className="live-game-solution">
-          {this.state.solution.map((letter, index) => {
-            return (
-              <div className="solution-letter" key={index}>
-                {letter}
-              </div>
-            );
-          })}
-        </div>
-        <div className="live-game-tries">
-          <h1> You have </h1> <h2 className="chances-remaining"> {triesRemaining} </h2> <h1> tries remaining. </h1>
-        </div>
-        <div className="live-game-misses">
-          {this.state.misses.map((miss, index) => {
-            return (
-              <div className="misses-letter" key={index}>
-                {miss}
-              </div>
-            );
-          })}
-        </div>
-        <div className="live-game-guess">
-          <input
-            id="guess__input"
-            type="text"
-            placeholder="Enter Letter or Word Guess Here"
-            value={this.state.guess}
-            onChange={this.updateGuess}
-          />
-          <button className="submit-guess__btn" onClick={this.submitGuess}>
-            Submit Guess
-          </button>
-        </div>
+        {liveGameBody}
       </div>
     );
   }
