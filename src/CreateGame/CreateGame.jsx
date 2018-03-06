@@ -20,29 +20,40 @@ class CreateGame extends Component {
     this.updateWord = this.updateWord.bind(this);
     this.createNewGame = this.createNewGame.bind(this);
   }
+  componentWillMount() {
+    console.log(this.props.web3.eth.getBalance('0x345ca3e014aaf5dca488057592ee47305d9b3e10'));
+  }
 
   createNewGame(e) {
     let self = this;
-    let account = this.props.accounts[0];
     let hangmanInstance;
+    let account = this.props.accounts[0];
+    let balance = this.props.web3.eth.getBalance(account);
+    balance = balance.c[0];
     let wager = new Number(this.state.wager).valueOf();
-    let tries = new Number(this.state.tries).valueOf();
-    let word = this.state.word.toLowerCase().trim();
-    let userName = this.state.userName;
-    let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
-    let wordLength = word.length;
-    this.props.hangmanContract
-      .deployed()
-      .then(function(instance) {
-        hangmanInstance = instance;
-        return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
-          from: account,
-          gas: 3000000
+    console.log(wager);
+    if (balance >= wager) {
+      let tries = new Number(this.state.tries).valueOf();
+      let word = this.state.word.toLowerCase().trim();
+      let userName = this.state.userName;
+      let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
+      let wordLength = word.length;
+      this.props.hangmanContract
+        .deployed()
+        .then(function(instance) {
+          hangmanInstance = instance;
+          return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
+            from: account,
+            gas: 3000000,
+            value: wager
+          });
+        })
+        .catch(function(err) {
+          console.log(err);
         });
-      })
-      .catch(function(err) {
-        console.log(err);
-      });
+    } else {
+      alert('not enough wei, mo fo');
+    }
   }
 
   updateUserName(e) {
@@ -105,7 +116,7 @@ class CreateGame extends Component {
             <input
               id="ether-wager__input"
               type="text"
-              placeholder="Enter Wager Amount Here"
+              placeholder="Enter Wei Wager Amount Here"
               value={this.state.wager}
               onChange={this.updateWager}
             />

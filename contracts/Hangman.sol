@@ -2,21 +2,22 @@ pragma solidity ^0.4.19;
 
 contract Hangman {
 
-  event NewGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
-  event PendingGame(uint gameId, uint8 wager, uint8 tries, string userName, string userWord, uint8 wordLength);
-  event GameStarted(string challenger, string hangman, uint gameId, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
+  event NewGame(uint gameId, uint wager, uint8 tries, string userName, string userWord, uint8 wordLength);
+  event PendingGame(uint gameId, uint wager, uint8 tries, string userName, string userWord, uint8 wordLength);
+  event GameStarted(string challenger, string hangman, uint gameId, uint wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
   event SolutionGuess(string guess, bool hit, uint32 index);
   event GameWinner(string winner, string word, string loser);
-  event ActiveGameDetails(string challenger, string hangman, uint8 wager, uint8 maxTries, string uniqGameString, uint8 wordLength, uint8 tries, uint gameId);
+  event ActiveGameDetails(string challenger, string hangman, uint wager, uint8 maxTries, string uniqGameString, uint8 wordLength, uint8 tries, uint gameId);
   event SolutionCheck(string letter, uint32 index);
   event MissesCheck(string letter, uint32 index);
   event RemovePendingGame(string userWord);
+  event FundTransfer(address contractAddress, uint wager, bool success);
 
   uint32 gamesArrayGaps = 0;
 
   struct Game {
     string word;
-    uint8 wager;
+    uint wager;
     uint8 tries;
     string userWord;
     string userName;
@@ -25,7 +26,7 @@ contract Hangman {
 
   struct ActiveGame {
     string word;
-    uint8 wager;
+    uint wager;
     uint8 maxTries;
     string uniqGameString;
     string hangman;
@@ -75,7 +76,19 @@ contract Hangman {
     checkSendMisses();
   }
 
-  function createGame(string _word, uint8 _wager, uint8 _tries, string _userWord, string _userName, uint8 _wordLength) public {
+  function () payable public {
+    //FundTransfer(this, msg.value, true);
+  }
+
+  function holdFunds () public payable returns(bool success) {
+    if (this.send(msg.value)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function reallyCreateGame(string _word, uint _wager, uint8 _tries, string _userWord, string _userName, uint8 _wordLength) private {
     uint id;
     if (gamesArrayGaps < 1) {
       id = games.push(Game(_word, _wager, _tries, _userWord, _userName, _wordLength)) - 1;
@@ -91,6 +104,14 @@ contract Hangman {
     }
     idToWord[id] = _word;
     NewGame(id, _wager, _tries, _userName, _userWord, _wordLength);
+  }
+
+  function createGame(string _word, uint _wager, uint8 _tries, string _userWord, string _userName, uint8 _wordLength) public payable {
+    if (this.send(msg.value)) {
+      reallyCreateGame(_word, _wager, _tries, _userWord, _userName, _wordLength);
+    } else {
+      FundTransfer(this, msg.value, false);
+    }
   }
 
   function getPendingGames() public {
