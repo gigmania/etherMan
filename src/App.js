@@ -173,12 +173,20 @@ class App extends Component {
     });
   }
 
+  // handleTries(tries) {
+  //   let liveGame = this.state.liveGame;
+  //   liveGame.tries = tries.tries;
+  //   this.setState({
+  //     liveGame: liveGame
+  //   });
+  // }
+
   handleGuessResult(guess) {
     guess = guess.args;
     let guessLetter = guess.guess.toUpperCase();
     let letterIndex = guess.index.c[0];
     let liveGame = this.state.liveGame;
-    liveGame.tries++;
+    liveGame.tries = guess.tries;
     if (guess.hit === true) {
       liveGame.solution[letterIndex] = guessLetter;
     }
@@ -261,7 +269,6 @@ class App extends Component {
         });
         hangmanInstance.GameWinner(function(error, result) {
           self.handleWinnerResult(result);
-          console.log('I am the GAME WINNER ---> ', result);
         });
         hangmanInstance.ActiveGameDetails(function(error, result) {
           self.handleLiveGameResult(result);
@@ -275,6 +282,9 @@ class App extends Component {
         hangmanInstance.RemovePendingGame(function(error, result) {
           self.handlePendingGameRemoval(result.args);
         });
+        // hangmanInstance.IncrementTries(function(error, result) {
+        //   self.handleTries(result.args);
+        // });
         hangmanInstance.FundTransfer(function(error, result) {
           console.log('funds transferred ---> ', result);
         });

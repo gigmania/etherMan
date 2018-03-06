@@ -8,8 +8,9 @@ contract LiveGame is PendingGame {
   event SolutionCheck(string letter, uint32 index);
   event MissesCheck(string letter, uint32 index);
   event GameStarted(string challenger, string hangman, uint gameId, uint wager, uint8 maxTries, string uniqGameString, uint8 wordLength);
-  event SolutionGuess(string guess, bool hit, uint32 index);
+  event SolutionGuess(string guess, bool hit, uint32 index, uint8 tries);
   event GameWinner(string winner, string word, string loser);
+  //event IncrementTries(uint8 tries);
 
   struct ActiveGame {
     string word;
@@ -90,6 +91,7 @@ contract LiveGame is PendingGame {
 
   function checkGuess(string guess, uint gameId) public {
     activeGames[gameId].tries++;
+    //IncrementTries(activeGames[gameId].tries);
     bool isHit = false;
     string memory gameWord = activeGames[gameId].word;
     if (bytes(guess).length > 1) {
@@ -99,7 +101,7 @@ contract LiveGame is PendingGame {
         if (bytes(gameWord)[i] == bytes(guess)[0]) {
           isHit = true;
           activeGames[gameId].hits[i] = guess;
-          SolutionGuess(guess, true, i);
+          SolutionGuess(guess, true, i, activeGames[gameId].tries);
         }
       }
       if (isHit == true) {
@@ -113,7 +115,7 @@ contract LiveGame is PendingGame {
 
   function checkHanged(uint gameId, string guess) private {
     if (activeGames[gameId].maxTries > activeGames[gameId].tries) {
-      SolutionGuess(guess, false, 0);
+      SolutionGuess(guess, false, 0, activeGames[gameId].tries);
       activeGames[gameId].misses.push(guess);
     } else {
       GameWinner(activeGames[gameId].hangman, activeGames[gameId].word, activeGames[gameId].challenger);

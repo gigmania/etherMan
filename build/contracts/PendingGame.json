@@ -157,7 +157,7 @@
       "absolutePath": "/Users/tysondaugherty/Desktop/funApps/ether/etherHang/contracts/PendingGame.sol",
       "exportedSymbols": {
         "PendingGame": [
-          1071
+          1081
         ]
       }
     },
@@ -171,7 +171,7 @@
             ".19"
           ]
         },
-        "id": 896,
+        "id": 906,
         "name": "PragmaDirective",
         "src": "0:24:2"
       },
@@ -187,10 +187,10 @@
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
-            1071
+            1081
           ],
           "name": "PendingGame",
-          "scope": 1072
+          "scope": 1082
         },
         "children": [
           {
@@ -206,7 +206,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "gameId",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -219,12 +219,12 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 897,
+                        "id": 907,
                         "name": "ElementaryTypeName",
                         "src": "66:4:2"
                       }
                     ],
-                    "id": 898,
+                    "id": 908,
                     "name": "VariableDeclaration",
                     "src": "66:11:2"
                   },
@@ -233,7 +233,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "wager",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -246,12 +246,12 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 899,
+                        "id": 909,
                         "name": "ElementaryTypeName",
                         "src": "79:4:2"
                       }
                     ],
-                    "id": 900,
+                    "id": 910,
                     "name": "VariableDeclaration",
                     "src": "79:10:2"
                   },
@@ -260,7 +260,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "tries",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -273,12 +273,12 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 901,
+                        "id": 911,
                         "name": "ElementaryTypeName",
                         "src": "91:5:2"
                       }
                     ],
-                    "id": 902,
+                    "id": 912,
                     "name": "VariableDeclaration",
                     "src": "91:11:2"
                   },
@@ -287,7 +287,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "userName",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -300,12 +300,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 903,
+                        "id": 913,
                         "name": "ElementaryTypeName",
                         "src": "104:6:2"
                       }
                     ],
-                    "id": 904,
+                    "id": 914,
                     "name": "VariableDeclaration",
                     "src": "104:15:2"
                   },
@@ -314,7 +314,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "userWord",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -327,12 +327,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 905,
+                        "id": 915,
                         "name": "ElementaryTypeName",
                         "src": "121:6:2"
                       }
                     ],
-                    "id": 906,
+                    "id": 916,
                     "name": "VariableDeclaration",
                     "src": "121:15:2"
                   },
@@ -341,7 +341,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "wordLength",
-                      "scope": 910,
+                      "scope": 920,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -354,22 +354,22 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 907,
+                        "id": 917,
                         "name": "ElementaryTypeName",
                         "src": "138:5:2"
                       }
                     ],
-                    "id": 908,
+                    "id": 918,
                     "name": "VariableDeclaration",
                     "src": "138:16:2"
                   }
                 ],
-                "id": 909,
+                "id": 919,
                 "name": "ParameterList",
                 "src": "65:90:2"
               }
             ],
-            "id": 910,
+            "id": 920,
             "name": "EventDefinition",
             "src": "52:104:2"
           },
@@ -386,7 +386,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "gameId",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -399,12 +399,12 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 911,
+                        "id": 921,
                         "name": "ElementaryTypeName",
                         "src": "178:4:2"
                       }
                     ],
-                    "id": 912,
+                    "id": 922,
                     "name": "VariableDeclaration",
                     "src": "178:11:2"
                   },
@@ -413,7 +413,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "wager",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -426,12 +426,12 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 913,
+                        "id": 923,
                         "name": "ElementaryTypeName",
                         "src": "191:4:2"
                       }
                     ],
-                    "id": 914,
+                    "id": 924,
                     "name": "VariableDeclaration",
                     "src": "191:10:2"
                   },
@@ -440,7 +440,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "tries",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -453,12 +453,12 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 915,
+                        "id": 925,
                         "name": "ElementaryTypeName",
                         "src": "203:5:2"
                       }
                     ],
-                    "id": 916,
+                    "id": 926,
                     "name": "VariableDeclaration",
                     "src": "203:11:2"
                   },
@@ -467,7 +467,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "userName",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -480,12 +480,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 917,
+                        "id": 927,
                         "name": "ElementaryTypeName",
                         "src": "216:6:2"
                       }
                     ],
-                    "id": 918,
+                    "id": 928,
                     "name": "VariableDeclaration",
                     "src": "216:15:2"
                   },
@@ -494,7 +494,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "userWord",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -507,12 +507,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 919,
+                        "id": 929,
                         "name": "ElementaryTypeName",
                         "src": "233:6:2"
                       }
                     ],
-                    "id": 920,
+                    "id": 930,
                     "name": "VariableDeclaration",
                     "src": "233:15:2"
                   },
@@ -521,7 +521,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "wordLength",
-                      "scope": 924,
+                      "scope": 934,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -534,22 +534,22 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 921,
+                        "id": 931,
                         "name": "ElementaryTypeName",
                         "src": "250:5:2"
                       }
                     ],
-                    "id": 922,
+                    "id": 932,
                     "name": "VariableDeclaration",
                     "src": "250:16:2"
                   }
                 ],
-                "id": 923,
+                "id": 933,
                 "name": "ParameterList",
                 "src": "177:90:2"
               }
             ],
-            "id": 924,
+            "id": 934,
             "name": "EventDefinition",
             "src": "159:109:2"
           },
@@ -566,7 +566,7 @@
                       "constant": false,
                       "indexed": false,
                       "name": "userWord",
-                      "scope": 928,
+                      "scope": 938,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -579,22 +579,22 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 925,
+                        "id": 935,
                         "name": "ElementaryTypeName",
                         "src": "295:6:2"
                       }
                     ],
-                    "id": 926,
+                    "id": 936,
                     "name": "VariableDeclaration",
                     "src": "295:15:2"
                   }
                 ],
-                "id": 927,
+                "id": 937,
                 "name": "ParameterList",
                 "src": "294:17:2"
               }
             ],
-            "id": 928,
+            "id": 938,
             "name": "EventDefinition",
             "src": "271:41:2"
           },
@@ -602,7 +602,7 @@
             "attributes": {
               "constant": false,
               "name": "gamesArrayGaps",
-              "scope": 1071,
+              "scope": 1081,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "uint32",
@@ -614,7 +614,7 @@
                   "name": "uint32",
                   "type": "uint32"
                 },
-                "id": 929,
+                "id": 939,
                 "name": "ElementaryTypeName",
                 "src": "316:6:2"
               },
@@ -631,12 +631,12 @@
                   "type": "int_const 0",
                   "value": "0"
                 },
-                "id": 930,
+                "id": 940,
                 "name": "Literal",
                 "src": "340:1:2"
               }
             ],
-            "id": 931,
+            "id": 941,
             "name": "VariableDeclaration",
             "src": "316:25:2"
           },
@@ -644,7 +644,7 @@
             "attributes": {
               "canonicalName": "PendingGame.Game",
               "name": "Game",
-              "scope": 1071,
+              "scope": 1081,
               "visibility": "public"
             },
             "children": [
@@ -652,7 +652,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "word",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "string storage pointer",
@@ -665,12 +665,12 @@
                       "name": "string",
                       "type": "string storage pointer"
                     },
-                    "id": 932,
+                    "id": 942,
                     "name": "ElementaryTypeName",
                     "src": "364:6:2"
                   }
                 ],
-                "id": 933,
+                "id": 943,
                 "name": "VariableDeclaration",
                 "src": "364:11:2"
               },
@@ -678,7 +678,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "wager",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "uint256",
@@ -691,12 +691,12 @@
                       "name": "uint",
                       "type": "uint256"
                     },
-                    "id": 934,
+                    "id": 944,
                     "name": "ElementaryTypeName",
                     "src": "381:4:2"
                   }
                 ],
-                "id": 935,
+                "id": 945,
                 "name": "VariableDeclaration",
                 "src": "381:10:2"
               },
@@ -704,7 +704,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "tries",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "uint8",
@@ -717,12 +717,12 @@
                       "name": "uint8",
                       "type": "uint8"
                     },
-                    "id": 936,
+                    "id": 946,
                     "name": "ElementaryTypeName",
                     "src": "397:5:2"
                   }
                 ],
-                "id": 937,
+                "id": 947,
                 "name": "VariableDeclaration",
                 "src": "397:11:2"
               },
@@ -730,7 +730,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "userWord",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "string storage pointer",
@@ -743,12 +743,12 @@
                       "name": "string",
                       "type": "string storage pointer"
                     },
-                    "id": 938,
+                    "id": 948,
                     "name": "ElementaryTypeName",
                     "src": "414:6:2"
                   }
                 ],
-                "id": 939,
+                "id": 949,
                 "name": "VariableDeclaration",
                 "src": "414:15:2"
               },
@@ -756,7 +756,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "userName",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "string storage pointer",
@@ -769,12 +769,12 @@
                       "name": "string",
                       "type": "string storage pointer"
                     },
-                    "id": 940,
+                    "id": 950,
                     "name": "ElementaryTypeName",
                     "src": "435:6:2"
                   }
                 ],
-                "id": 941,
+                "id": 951,
                 "name": "VariableDeclaration",
                 "src": "435:15:2"
               },
@@ -782,7 +782,7 @@
                 "attributes": {
                   "constant": false,
                   "name": "wordLength",
-                  "scope": 944,
+                  "scope": 954,
                   "stateVariable": false,
                   "storageLocation": "default",
                   "type": "uint8",
@@ -795,17 +795,17 @@
                       "name": "uint8",
                       "type": "uint8"
                     },
-                    "id": 942,
+                    "id": 952,
                     "name": "ElementaryTypeName",
                     "src": "456:5:2"
                   }
                 ],
-                "id": 943,
+                "id": 953,
                 "name": "VariableDeclaration",
                 "src": "456:16:2"
               }
             ],
-            "id": 944,
+            "id": 954,
             "name": "StructDefinition",
             "src": "346:131:2"
           },
@@ -813,7 +813,7 @@
             "attributes": {
               "constant": false,
               "name": "games",
-              "scope": 1071,
+              "scope": 1081,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "struct PendingGame.Game storage ref[] storage ref",
@@ -831,20 +831,20 @@
                     "attributes": {
                       "contractScope": null,
                       "name": "Game",
-                      "referencedDeclaration": 944,
+                      "referencedDeclaration": 954,
                       "type": "struct PendingGame.Game storage pointer"
                     },
-                    "id": 945,
+                    "id": 955,
                     "name": "UserDefinedTypeName",
                     "src": "481:4:2"
                   }
                 ],
-                "id": 946,
+                "id": 956,
                 "name": "ArrayTypeName",
                 "src": "481:6:2"
               }
             ],
-            "id": 947,
+            "id": 957,
             "name": "VariableDeclaration",
             "src": "481:19:2"
           },
@@ -852,7 +852,7 @@
             "attributes": {
               "constant": false,
               "name": "idToWord",
-              "scope": 1071,
+              "scope": 1081,
               "stateVariable": true,
               "storageLocation": "default",
               "type": "mapping(uint256 => string storage ref)",
@@ -870,7 +870,7 @@
                       "name": "uint",
                       "type": "uint256"
                     },
-                    "id": 948,
+                    "id": 958,
                     "name": "ElementaryTypeName",
                     "src": "512:4:2"
                   },
@@ -879,17 +879,17 @@
                       "name": "string",
                       "type": "string storage pointer"
                     },
-                    "id": 949,
+                    "id": 959,
                     "name": "ElementaryTypeName",
                     "src": "520:6:2"
                   }
                 ],
-                "id": 950,
+                "id": 960,
                 "name": "Mapping",
                 "src": "504:23:2"
               }
             ],
-            "id": 951,
+            "id": 961,
             "name": "VariableDeclaration",
             "src": "504:39:2"
           },
@@ -903,7 +903,7 @@
               ],
               "name": "reallyCreateGame",
               "payable": false,
-              "scope": 1071,
+              "scope": 1081,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "internal"
@@ -915,7 +915,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_word",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -928,12 +928,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 952,
+                        "id": 962,
                         "name": "ElementaryTypeName",
                         "src": "574:6:2"
                       }
                     ],
-                    "id": 953,
+                    "id": 963,
                     "name": "VariableDeclaration",
                     "src": "574:12:2"
                   },
@@ -941,7 +941,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_wager",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -954,12 +954,12 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 954,
+                        "id": 964,
                         "name": "ElementaryTypeName",
                         "src": "588:4:2"
                       }
                     ],
-                    "id": 955,
+                    "id": 965,
                     "name": "VariableDeclaration",
                     "src": "588:11:2"
                   },
@@ -967,7 +967,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_tries",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -980,12 +980,12 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 956,
+                        "id": 966,
                         "name": "ElementaryTypeName",
                         "src": "601:5:2"
                       }
                     ],
-                    "id": 957,
+                    "id": 967,
                     "name": "VariableDeclaration",
                     "src": "601:12:2"
                   },
@@ -993,7 +993,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_userWord",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -1006,12 +1006,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 958,
+                        "id": 968,
                         "name": "ElementaryTypeName",
                         "src": "615:6:2"
                       }
                     ],
-                    "id": 959,
+                    "id": 969,
                     "name": "VariableDeclaration",
                     "src": "615:16:2"
                   },
@@ -1019,7 +1019,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_userName",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "string memory",
@@ -1032,12 +1032,12 @@
                           "name": "string",
                           "type": "string storage pointer"
                         },
-                        "id": 960,
+                        "id": 970,
                         "name": "ElementaryTypeName",
                         "src": "633:6:2"
                       }
                     ],
-                    "id": 961,
+                    "id": 971,
                     "name": "VariableDeclaration",
                     "src": "633:16:2"
                   },
@@ -1045,7 +1045,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "_wordLength",
-                      "scope": 1049,
+                      "scope": 1059,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint8",
@@ -1058,17 +1058,17 @@
                           "name": "uint8",
                           "type": "uint8"
                         },
-                        "id": 962,
+                        "id": 972,
                         "name": "ElementaryTypeName",
                         "src": "651:5:2"
                       }
                     ],
-                    "id": 963,
+                    "id": 973,
                     "name": "VariableDeclaration",
                     "src": "651:17:2"
                   }
                 ],
-                "id": 964,
+                "id": 974,
                 "name": "ParameterList",
                 "src": "573:96:2"
               },
@@ -1079,7 +1079,7 @@
                   ]
                 },
                 "children": [],
-                "id": 965,
+                "id": 975,
                 "name": "ParameterList",
                 "src": "679:0:2"
               },
@@ -1097,7 +1097,7 @@
                         "attributes": {
                           "constant": false,
                           "name": "id",
-                          "scope": 1049,
+                          "scope": 1059,
                           "stateVariable": false,
                           "storageLocation": "default",
                           "type": "uint256",
@@ -1110,17 +1110,17 @@
                               "name": "uint",
                               "type": "uint256"
                             },
-                            "id": 966,
+                            "id": 976,
                             "name": "ElementaryTypeName",
                             "src": "685:4:2"
                           }
                         ],
-                        "id": 967,
+                        "id": 977,
                         "name": "VariableDeclaration",
                         "src": "685:7:2"
                       }
                     ],
-                    "id": 968,
+                    "id": 978,
                     "name": "VariableDeclarationStatement",
                     "src": "685:7:2"
                   },
@@ -1147,11 +1147,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 931,
+                              "referencedDeclaration": 941,
                               "type": "uint32",
                               "value": "gamesArrayGaps"
                             },
-                            "id": 969,
+                            "id": 979,
                             "name": "Identifier",
                             "src": "702:14:2"
                           },
@@ -1168,12 +1168,12 @@
                               "type": "int_const 1",
                               "value": "1"
                             },
-                            "id": 970,
+                            "id": 980,
                             "name": "Literal",
                             "src": "719:1:2"
                           }
                         ],
-                        "id": 971,
+                        "id": 981,
                         "name": "BinaryOperation",
                         "src": "702:18:2"
                       },
@@ -1198,11 +1198,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 967,
+                                      "referencedDeclaration": 977,
                                       "type": "uint256",
                                       "value": "id"
                                     },
-                                    "id": 972,
+                                    "id": 982,
                                     "name": "Identifier",
                                     "src": "730:2:2"
                                   },
@@ -1240,7 +1240,7 @@
                                             "attributes": {
                                               "argumentTypes": [
                                                 {
-                                                  "typeIdentifier": "t_struct$_Game_$944_memory",
+                                                  "typeIdentifier": "t_struct$_Game_$954_memory",
                                                   "typeString": "struct PendingGame.Game memory"
                                                 }
                                               ],
@@ -1259,16 +1259,16 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 947,
+                                                  "referencedDeclaration": 957,
                                                   "type": "struct PendingGame.Game storage ref[] storage ref",
                                                   "value": "games"
                                                 },
-                                                "id": 973,
+                                                "id": 983,
                                                 "name": "Identifier",
                                                 "src": "735:5:2"
                                               }
                                             ],
-                                            "id": 974,
+                                            "id": 984,
                                             "name": "MemberAccess",
                                             "src": "735:10:2"
                                           },
@@ -1318,11 +1318,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 944,
+                                                  "referencedDeclaration": 954,
                                                   "type": "type(struct PendingGame.Game storage pointer)",
                                                   "value": "Game"
                                                 },
-                                                "id": 975,
+                                                "id": 985,
                                                 "name": "Identifier",
                                                 "src": "746:4:2"
                                               },
@@ -1332,11 +1332,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 953,
+                                                  "referencedDeclaration": 963,
                                                   "type": "string memory",
                                                   "value": "_word"
                                                 },
-                                                "id": 976,
+                                                "id": 986,
                                                 "name": "Identifier",
                                                 "src": "751:5:2"
                                               },
@@ -1346,11 +1346,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 955,
+                                                  "referencedDeclaration": 965,
                                                   "type": "uint256",
                                                   "value": "_wager"
                                                 },
-                                                "id": 977,
+                                                "id": 987,
                                                 "name": "Identifier",
                                                 "src": "758:6:2"
                                               },
@@ -1360,11 +1360,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 957,
+                                                  "referencedDeclaration": 967,
                                                   "type": "uint8",
                                                   "value": "_tries"
                                                 },
-                                                "id": 978,
+                                                "id": 988,
                                                 "name": "Identifier",
                                                 "src": "766:6:2"
                                               },
@@ -1374,11 +1374,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 959,
+                                                  "referencedDeclaration": 969,
                                                   "type": "string memory",
                                                   "value": "_userWord"
                                                 },
-                                                "id": 979,
+                                                "id": 989,
                                                 "name": "Identifier",
                                                 "src": "774:9:2"
                                               },
@@ -1388,11 +1388,11 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 961,
+                                                  "referencedDeclaration": 971,
                                                   "type": "string memory",
                                                   "value": "_userName"
                                                 },
-                                                "id": 980,
+                                                "id": 990,
                                                 "name": "Identifier",
                                                 "src": "785:9:2"
                                               },
@@ -1402,21 +1402,21 @@
                                                   "overloadedDeclarations": [
                                                     null
                                                   ],
-                                                  "referencedDeclaration": 963,
+                                                  "referencedDeclaration": 973,
                                                   "type": "uint8",
                                                   "value": "_wordLength"
                                                 },
-                                                "id": 981,
+                                                "id": 991,
                                                 "name": "Identifier",
                                                 "src": "796:11:2"
                                               }
                                             ],
-                                            "id": 982,
+                                            "id": 992,
                                             "name": "FunctionCall",
                                             "src": "746:62:2"
                                           }
                                         ],
-                                        "id": 983,
+                                        "id": 993,
                                         "name": "FunctionCall",
                                         "src": "735:74:2"
                                       },
@@ -1433,27 +1433,27 @@
                                           "type": "int_const 1",
                                           "value": "1"
                                         },
-                                        "id": 984,
+                                        "id": 994,
                                         "name": "Literal",
                                         "src": "812:1:2"
                                       }
                                     ],
-                                    "id": 985,
+                                    "id": 995,
                                     "name": "BinaryOperation",
                                     "src": "735:78:2"
                                   }
                                 ],
-                                "id": 986,
+                                "id": 996,
                                 "name": "Assignment",
                                 "src": "730:83:2"
                               }
                             ],
-                            "id": 987,
+                            "id": 997,
                             "name": "ExpressionStatement",
                             "src": "730:83:2"
                           }
                         ],
-                        "id": 988,
+                        "id": 998,
                         "name": "Block",
                         "src": "722:98:2"
                       },
@@ -1464,7 +1464,7 @@
                               {
                                 "attributes": {
                                   "assignments": [
-                                    990
+                                    1000
                                   ]
                                 },
                                 "children": [
@@ -1472,7 +1472,7 @@
                                     "attributes": {
                                       "constant": false,
                                       "name": "i",
-                                      "scope": 1049,
+                                      "scope": 1059,
                                       "stateVariable": false,
                                       "storageLocation": "default",
                                       "type": "uint32",
@@ -1485,12 +1485,12 @@
                                           "name": "uint32",
                                           "type": "uint32"
                                         },
-                                        "id": 989,
+                                        "id": 999,
                                         "name": "ElementaryTypeName",
                                         "src": "839:6:2"
                                       }
                                     ],
-                                    "id": 990,
+                                    "id": 1000,
                                     "name": "VariableDeclaration",
                                     "src": "839:8:2"
                                   },
@@ -1507,12 +1507,12 @@
                                       "type": "int_const 0",
                                       "value": "0"
                                     },
-                                    "id": 991,
+                                    "id": 1001,
                                     "name": "Literal",
                                     "src": "850:1:2"
                                   }
                                 ],
-                                "id": 992,
+                                "id": 1002,
                                 "name": "VariableDeclarationStatement",
                                 "src": "839:12:2"
                               },
@@ -1537,11 +1537,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 990,
+                                      "referencedDeclaration": 1000,
                                       "type": "uint32",
                                       "value": "i"
                                     },
-                                    "id": 993,
+                                    "id": 1003,
                                     "name": "Identifier",
                                     "src": "853:1:2"
                                   },
@@ -1563,21 +1563,21 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 947,
+                                          "referencedDeclaration": 957,
                                           "type": "struct PendingGame.Game storage ref[] storage ref",
                                           "value": "games"
                                         },
-                                        "id": 994,
+                                        "id": 1004,
                                         "name": "Identifier",
                                         "src": "857:5:2"
                                       }
                                     ],
-                                    "id": 995,
+                                    "id": 1005,
                                     "name": "MemberAccess",
                                     "src": "857:12:2"
                                   }
                                 ],
-                                "id": 996,
+                                "id": 1006,
                                 "name": "BinaryOperation",
                                 "src": "853:16:2"
                               },
@@ -1601,21 +1601,21 @@
                                           "overloadedDeclarations": [
                                             null
                                           ],
-                                          "referencedDeclaration": 990,
+                                          "referencedDeclaration": 1000,
                                           "type": "uint32",
                                           "value": "i"
                                         },
-                                        "id": 997,
+                                        "id": 1007,
                                         "name": "Identifier",
                                         "src": "871:1:2"
                                       }
                                     ],
-                                    "id": 998,
+                                    "id": 1008,
                                     "name": "UnaryOperation",
                                     "src": "871:3:2"
                                   }
                                 ],
-                                "id": 999,
+                                "id": 1009,
                                 "name": "ExpressionStatement",
                                 "src": "871:3:2"
                               },
@@ -1649,7 +1649,7 @@
                                               "isPure": false,
                                               "lValueRequested": false,
                                               "member_name": "wordLength",
-                                              "referencedDeclaration": 943,
+                                              "referencedDeclaration": 953,
                                               "type": "uint8"
                                             },
                                             "children": [
@@ -1669,11 +1669,11 @@
                                                       "overloadedDeclarations": [
                                                         null
                                                       ],
-                                                      "referencedDeclaration": 947,
+                                                      "referencedDeclaration": 957,
                                                       "type": "struct PendingGame.Game storage ref[] storage ref",
                                                       "value": "games"
                                                     },
-                                                    "id": 1000,
+                                                    "id": 1010,
                                                     "name": "Identifier",
                                                     "src": "890:5:2"
                                                   },
@@ -1683,21 +1683,21 @@
                                                       "overloadedDeclarations": [
                                                         null
                                                       ],
-                                                      "referencedDeclaration": 990,
+                                                      "referencedDeclaration": 1000,
                                                       "type": "uint32",
                                                       "value": "i"
                                                     },
-                                                    "id": 1001,
+                                                    "id": 1011,
                                                     "name": "Identifier",
                                                     "src": "896:1:2"
                                                   }
                                                 ],
-                                                "id": 1002,
+                                                "id": 1012,
                                                 "name": "IndexAccess",
                                                 "src": "890:8:2"
                                               }
                                             ],
-                                            "id": 1003,
+                                            "id": 1013,
                                             "name": "MemberAccess",
                                             "src": "890:19:2"
                                           },
@@ -1714,12 +1714,12 @@
                                               "type": "int_const 0",
                                               "value": "0"
                                             },
-                                            "id": 1004,
+                                            "id": 1014,
                                             "name": "Literal",
                                             "src": "913:1:2"
                                           }
                                         ],
-                                        "id": 1005,
+                                        "id": 1015,
                                         "name": "BinaryOperation",
                                         "src": "890:24:2"
                                       },
@@ -1754,11 +1754,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 947,
+                                                          "referencedDeclaration": 957,
                                                           "type": "struct PendingGame.Game storage ref[] storage ref",
                                                           "value": "games"
                                                         },
-                                                        "id": 1006,
+                                                        "id": 1016,
                                                         "name": "Identifier",
                                                         "src": "928:5:2"
                                                       },
@@ -1768,16 +1768,16 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 990,
+                                                          "referencedDeclaration": 1000,
                                                           "type": "uint32",
                                                           "value": "i"
                                                         },
-                                                        "id": 1007,
+                                                        "id": 1017,
                                                         "name": "Identifier",
                                                         "src": "934:1:2"
                                                       }
                                                     ],
-                                                    "id": 1008,
+                                                    "id": 1018,
                                                     "name": "IndexAccess",
                                                     "src": "928:8:2"
                                                   },
@@ -1827,11 +1827,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 944,
+                                                          "referencedDeclaration": 954,
                                                           "type": "type(struct PendingGame.Game storage pointer)",
                                                           "value": "Game"
                                                         },
-                                                        "id": 1009,
+                                                        "id": 1019,
                                                         "name": "Identifier",
                                                         "src": "939:4:2"
                                                       },
@@ -1841,11 +1841,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 953,
+                                                          "referencedDeclaration": 963,
                                                           "type": "string memory",
                                                           "value": "_word"
                                                         },
-                                                        "id": 1010,
+                                                        "id": 1020,
                                                         "name": "Identifier",
                                                         "src": "944:5:2"
                                                       },
@@ -1855,11 +1855,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 955,
+                                                          "referencedDeclaration": 965,
                                                           "type": "uint256",
                                                           "value": "_wager"
                                                         },
-                                                        "id": 1011,
+                                                        "id": 1021,
                                                         "name": "Identifier",
                                                         "src": "951:6:2"
                                                       },
@@ -1869,11 +1869,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 957,
+                                                          "referencedDeclaration": 967,
                                                           "type": "uint8",
                                                           "value": "_tries"
                                                         },
-                                                        "id": 1012,
+                                                        "id": 1022,
                                                         "name": "Identifier",
                                                         "src": "959:6:2"
                                                       },
@@ -1883,11 +1883,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 959,
+                                                          "referencedDeclaration": 969,
                                                           "type": "string memory",
                                                           "value": "_userWord"
                                                         },
-                                                        "id": 1013,
+                                                        "id": 1023,
                                                         "name": "Identifier",
                                                         "src": "967:9:2"
                                                       },
@@ -1897,11 +1897,11 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 961,
+                                                          "referencedDeclaration": 971,
                                                           "type": "string memory",
                                                           "value": "_userName"
                                                         },
-                                                        "id": 1014,
+                                                        "id": 1024,
                                                         "name": "Identifier",
                                                         "src": "978:9:2"
                                                       },
@@ -1911,26 +1911,26 @@
                                                           "overloadedDeclarations": [
                                                             null
                                                           ],
-                                                          "referencedDeclaration": 963,
+                                                          "referencedDeclaration": 973,
                                                           "type": "uint8",
                                                           "value": "_wordLength"
                                                         },
-                                                        "id": 1015,
+                                                        "id": 1025,
                                                         "name": "Identifier",
                                                         "src": "989:11:2"
                                                       }
                                                     ],
-                                                    "id": 1016,
+                                                    "id": 1026,
                                                     "name": "FunctionCall",
                                                     "src": "939:62:2"
                                                   }
                                                 ],
-                                                "id": 1017,
+                                                "id": 1027,
                                                 "name": "Assignment",
                                                 "src": "928:73:2"
                                               }
                                             ],
-                                            "id": 1018,
+                                            "id": 1028,
                                             "name": "ExpressionStatement",
                                             "src": "928:73:2"
                                           },
@@ -1953,11 +1953,11 @@
                                                       "overloadedDeclarations": [
                                                         null
                                                       ],
-                                                      "referencedDeclaration": 967,
+                                                      "referencedDeclaration": 977,
                                                       "type": "uint256",
                                                       "value": "id"
                                                     },
-                                                    "id": 1019,
+                                                    "id": 1029,
                                                     "name": "Identifier",
                                                     "src": "1013:2:2"
                                                   },
@@ -1967,21 +1967,21 @@
                                                       "overloadedDeclarations": [
                                                         null
                                                       ],
-                                                      "referencedDeclaration": 990,
+                                                      "referencedDeclaration": 1000,
                                                       "type": "uint32",
                                                       "value": "i"
                                                     },
-                                                    "id": 1020,
+                                                    "id": 1030,
                                                     "name": "Identifier",
                                                     "src": "1018:1:2"
                                                   }
                                                 ],
-                                                "id": 1021,
+                                                "id": 1031,
                                                 "name": "Assignment",
                                                 "src": "1013:6:2"
                                               }
                                             ],
-                                            "id": 1022,
+                                            "id": 1032,
                                             "name": "ExpressionStatement",
                                             "src": "1013:6:2"
                                           },
@@ -2005,56 +2005,56 @@
                                                       "overloadedDeclarations": [
                                                         null
                                                       ],
-                                                      "referencedDeclaration": 931,
+                                                      "referencedDeclaration": 941,
                                                       "type": "uint32",
                                                       "value": "gamesArrayGaps"
                                                     },
-                                                    "id": 1023,
+                                                    "id": 1033,
                                                     "name": "Identifier",
                                                     "src": "1031:14:2"
                                                   }
                                                 ],
-                                                "id": 1024,
+                                                "id": 1034,
                                                 "name": "UnaryOperation",
                                                 "src": "1031:16:2"
                                               }
                                             ],
-                                            "id": 1025,
+                                            "id": 1035,
                                             "name": "ExpressionStatement",
                                             "src": "1031:16:2"
                                           },
                                           {
-                                            "id": 1026,
+                                            "id": 1036,
                                             "name": "Break",
                                             "src": "1059:5:2"
                                           }
                                         ],
-                                        "id": 1027,
+                                        "id": 1037,
                                         "name": "Block",
                                         "src": "916:159:2"
                                       }
                                     ],
-                                    "id": 1028,
+                                    "id": 1038,
                                     "name": "IfStatement",
                                     "src": "886:189:2"
                                   }
                                 ],
-                                "id": 1029,
+                                "id": 1039,
                                 "name": "Block",
                                 "src": "876:207:2"
                               }
                             ],
-                            "id": 1030,
+                            "id": 1040,
                             "name": "ForStatement",
                             "src": "834:249:2"
                           }
                         ],
-                        "id": 1031,
+                        "id": 1041,
                         "name": "Block",
                         "src": "826:263:2"
                       }
                     ],
-                    "id": 1032,
+                    "id": 1042,
                     "name": "IfStatement",
                     "src": "698:391:2"
                   },
@@ -2087,11 +2087,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 951,
+                                  "referencedDeclaration": 961,
                                   "type": "mapping(uint256 => string storage ref)",
                                   "value": "idToWord"
                                 },
-                                "id": 1033,
+                                "id": 1043,
                                 "name": "Identifier",
                                 "src": "1094:8:2"
                               },
@@ -2101,16 +2101,16 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 967,
+                                  "referencedDeclaration": 977,
                                   "type": "uint256",
                                   "value": "id"
                                 },
-                                "id": 1034,
+                                "id": 1044,
                                 "name": "Identifier",
                                 "src": "1103:2:2"
                               }
                             ],
-                            "id": 1035,
+                            "id": 1045,
                             "name": "IndexAccess",
                             "src": "1094:12:2"
                           },
@@ -2120,21 +2120,21 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 953,
+                              "referencedDeclaration": 963,
                               "type": "string memory",
                               "value": "_word"
                             },
-                            "id": 1036,
+                            "id": 1046,
                             "name": "Identifier",
                             "src": "1109:5:2"
                           }
                         ],
-                        "id": 1037,
+                        "id": 1047,
                         "name": "Assignment",
                         "src": "1094:20:2"
                       }
                     ],
-                    "id": 1038,
+                    "id": 1048,
                     "name": "ExpressionStatement",
                     "src": "1094:20:2"
                   },
@@ -2186,11 +2186,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 910,
+                              "referencedDeclaration": 920,
                               "type": "function (uint256,uint256,uint8,string memory,string memory,uint8)",
                               "value": "NewGame"
                             },
-                            "id": 1039,
+                            "id": 1049,
                             "name": "Identifier",
                             "src": "1120:7:2"
                           },
@@ -2200,11 +2200,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 967,
+                              "referencedDeclaration": 977,
                               "type": "uint256",
                               "value": "id"
                             },
-                            "id": 1040,
+                            "id": 1050,
                             "name": "Identifier",
                             "src": "1128:2:2"
                           },
@@ -2214,11 +2214,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 955,
+                              "referencedDeclaration": 965,
                               "type": "uint256",
                               "value": "_wager"
                             },
-                            "id": 1041,
+                            "id": 1051,
                             "name": "Identifier",
                             "src": "1132:6:2"
                           },
@@ -2228,11 +2228,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 957,
+                              "referencedDeclaration": 967,
                               "type": "uint8",
                               "value": "_tries"
                             },
-                            "id": 1042,
+                            "id": 1052,
                             "name": "Identifier",
                             "src": "1140:6:2"
                           },
@@ -2242,11 +2242,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 961,
+                              "referencedDeclaration": 971,
                               "type": "string memory",
                               "value": "_userName"
                             },
-                            "id": 1043,
+                            "id": 1053,
                             "name": "Identifier",
                             "src": "1148:9:2"
                           },
@@ -2256,11 +2256,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 959,
+                              "referencedDeclaration": 969,
                               "type": "string memory",
                               "value": "_userWord"
                             },
-                            "id": 1044,
+                            "id": 1054,
                             "name": "Identifier",
                             "src": "1159:9:2"
                           },
@@ -2270,31 +2270,31 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 963,
+                              "referencedDeclaration": 973,
                               "type": "uint8",
                               "value": "_wordLength"
                             },
-                            "id": 1045,
+                            "id": 1055,
                             "name": "Identifier",
                             "src": "1170:11:2"
                           }
                         ],
-                        "id": 1046,
+                        "id": 1056,
                         "name": "FunctionCall",
                         "src": "1120:62:2"
                       }
                     ],
-                    "id": 1047,
+                    "id": 1057,
                     "name": "ExpressionStatement",
                     "src": "1120:62:2"
                   }
                 ],
-                "id": 1048,
+                "id": 1058,
                 "name": "Block",
                 "src": "679:508:2"
               }
             ],
-            "id": 1049,
+            "id": 1059,
             "name": "FunctionDefinition",
             "src": "548:639:2"
           },
@@ -2308,7 +2308,7 @@
               ],
               "name": "removeGameFromPending",
               "payable": false,
-              "scope": 1071,
+              "scope": 1081,
               "stateMutability": "nonpayable",
               "superFunction": null,
               "visibility": "internal"
@@ -2320,7 +2320,7 @@
                     "attributes": {
                       "constant": false,
                       "name": "gameId",
-                      "scope": 1070,
+                      "scope": 1080,
                       "stateVariable": false,
                       "storageLocation": "default",
                       "type": "uint256",
@@ -2333,17 +2333,17 @@
                           "name": "uint",
                           "type": "uint256"
                         },
-                        "id": 1050,
+                        "id": 1060,
                         "name": "ElementaryTypeName",
                         "src": "1222:4:2"
                       }
                     ],
-                    "id": 1051,
+                    "id": 1061,
                     "name": "VariableDeclaration",
                     "src": "1222:11:2"
                   }
                 ],
-                "id": 1052,
+                "id": 1062,
                 "name": "ParameterList",
                 "src": "1221:13:2"
               },
@@ -2354,7 +2354,7 @@
                   ]
                 },
                 "children": [],
-                "id": 1053,
+                "id": 1063,
                 "name": "ParameterList",
                 "src": "1244:0:2"
               },
@@ -2388,11 +2388,11 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 928,
+                              "referencedDeclaration": 938,
                               "type": "function (string memory)",
                               "value": "RemovePendingGame"
                             },
-                            "id": 1054,
+                            "id": 1064,
                             "name": "Identifier",
                             "src": "1250:17:2"
                           },
@@ -2404,7 +2404,7 @@
                               "isPure": false,
                               "lValueRequested": false,
                               "member_name": "userWord",
-                              "referencedDeclaration": 939,
+                              "referencedDeclaration": 949,
                               "type": "string storage ref"
                             },
                             "children": [
@@ -2424,11 +2424,11 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 947,
+                                      "referencedDeclaration": 957,
                                       "type": "struct PendingGame.Game storage ref[] storage ref",
                                       "value": "games"
                                     },
-                                    "id": 1055,
+                                    "id": 1065,
                                     "name": "Identifier",
                                     "src": "1268:5:2"
                                   },
@@ -2438,31 +2438,31 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 1051,
+                                      "referencedDeclaration": 1061,
                                       "type": "uint256",
                                       "value": "gameId"
                                     },
-                                    "id": 1056,
+                                    "id": 1066,
                                     "name": "Identifier",
                                     "src": "1274:6:2"
                                   }
                                 ],
-                                "id": 1057,
+                                "id": 1067,
                                 "name": "IndexAccess",
                                 "src": "1268:13:2"
                               }
                             ],
-                            "id": 1058,
+                            "id": 1068,
                             "name": "MemberAccess",
                             "src": "1268:22:2"
                           }
                         ],
-                        "id": 1059,
+                        "id": 1069,
                         "name": "FunctionCall",
                         "src": "1250:41:2"
                       }
                     ],
-                    "id": 1060,
+                    "id": 1070,
                     "name": "ExpressionStatement",
                     "src": "1250:41:2"
                   },
@@ -2496,11 +2496,11 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 947,
+                                  "referencedDeclaration": 957,
                                   "type": "struct PendingGame.Game storage ref[] storage ref",
                                   "value": "games"
                                 },
-                                "id": 1061,
+                                "id": 1071,
                                 "name": "Identifier",
                                 "src": "1304:5:2"
                               },
@@ -2510,26 +2510,26 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1051,
+                                  "referencedDeclaration": 1061,
                                   "type": "uint256",
                                   "value": "gameId"
                                 },
-                                "id": 1062,
+                                "id": 1072,
                                 "name": "Identifier",
                                 "src": "1310:6:2"
                               }
                             ],
-                            "id": 1063,
+                            "id": 1073,
                             "name": "IndexAccess",
                             "src": "1304:13:2"
                           }
                         ],
-                        "id": 1064,
+                        "id": 1074,
                         "name": "UnaryOperation",
                         "src": "1297:20:2"
                       }
                     ],
-                    "id": 1065,
+                    "id": 1075,
                     "name": "ExpressionStatement",
                     "src": "1297:20:2"
                   },
@@ -2553,41 +2553,41 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 931,
+                              "referencedDeclaration": 941,
                               "type": "uint32",
                               "value": "gamesArrayGaps"
                             },
-                            "id": 1066,
+                            "id": 1076,
                             "name": "Identifier",
                             "src": "1323:14:2"
                           }
                         ],
-                        "id": 1067,
+                        "id": 1077,
                         "name": "UnaryOperation",
                         "src": "1323:16:2"
                       }
                     ],
-                    "id": 1068,
+                    "id": 1078,
                     "name": "ExpressionStatement",
                     "src": "1323:16:2"
                   }
                 ],
-                "id": 1069,
+                "id": 1079,
                 "name": "Block",
                 "src": "1244:100:2"
               }
             ],
-            "id": 1070,
+            "id": 1080,
             "name": "FunctionDefinition",
             "src": "1191:153:2"
           }
         ],
-        "id": 1071,
+        "id": 1081,
         "name": "ContractDefinition",
         "src": "26:1320:2"
       }
     ],
-    "id": 1072,
+    "id": 1082,
     "name": "SourceUnit",
     "src": "0:1347:2"
   },
@@ -2603,5 +2603,5 @@
     }
   },
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-03-06T18:18:48.091Z"
+  "updatedAt": "2018-03-06T19:28:27.767Z"
 }

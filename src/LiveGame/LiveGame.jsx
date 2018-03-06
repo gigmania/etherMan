@@ -12,7 +12,8 @@ class LiveGame extends Component {
       misses: [],
       solution: [],
       guess: '',
-      hangman: ''
+      hangman: '',
+      tries: 0
     };
     this.updateGuess = this.updateGuess.bind(this);
     this.submitGuess = this.submitGuess.bind(this);
@@ -38,6 +39,11 @@ class LiveGame extends Component {
     let account = this.props.accounts[5];
     let guess = self.state.guess.toLowerCase().trim();
     let solutionString = this.props.solution.join('').trim();
+    let tries = this.state.tries;
+    tries++;
+    this.setState({
+      tries: tries
+    });
     this.props.hangmanContract
       .deployed()
       .then(function(instance) {
