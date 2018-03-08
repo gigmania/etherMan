@@ -24,32 +24,51 @@ class CreateGame extends Component {
   createNewGame(e) {
     let self = this;
     let hangmanInstance;
+    let oracleInstance;
     let account = this.props.accounts[0];
     let balance = this.props.web3.eth.getBalance(account);
     balance = balance.c[0];
     let wager = new Number(this.state.wager).valueOf();
-    if (balance >= wager) {
-      let tries = new Number(this.state.tries).valueOf();
-      let word = this.state.word.toLowerCase().trim();
-      let userName = this.state.userName;
-      let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
-      let wordLength = word.length;
-      this.props.hangmanContract
-        .deployed()
-        .then(function(instance) {
-          hangmanInstance = instance;
-          return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
-            from: account,
-            gas: 3000000,
-            value: wager
-          });
-        })
-        .catch(function(err) {
-          console.log(err);
+    let word = this.state.word.toLowerCase().trim();
+    this.props.oracleContract
+      .deployed()
+      .then(function(instance) {
+        oracleInstance = instance;
+        console.log(instance);
+        return oracleInstance.checkWordValidity(word, {
+          from: account,
+          gas: 30000
         });
-    } else {
-      alert('not enough wei, mo fo');
-    }
+      })
+      .then(function(results) {
+        console.log(results);
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+
+    // if (balance >= wager) {
+    //   let tries = new Number(this.state.tries).valueOf();
+    //   let word = this.state.word.toLowerCase().trim();
+    //   let userName = this.state.userName;
+    //   let userWord = new Date().getTime() + userName + tries + ':000$' + wager;
+    //   let wordLength = word.length;
+    //   this.props.hangmanContract
+    //     .deployed()
+    //     .then(function(instance) {
+    //       hangmanInstance = instance;
+    //       return hangmanInstance.createGame(word, wager, tries, userWord, userName, wordLength, {
+    //         from: account,
+    //         gas: 3000000,
+    //         value: wager
+    //       });
+    //     })
+    //     .catch(function(err) {
+    //       console.log(err);
+    //     });
+    // } else {
+    //   alert('not enough wei, mo fo');
+    // }
   }
 
   updateUserName(e) {

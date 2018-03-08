@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import HangmanContract from '../build/contracts/Hangman.json';
+import OracleContract from '../build/contracts/HangmanOracle.json';
 import getWeb3 from './utils/getWeb3';
 import GamesList from './GamesList/GamesList';
 import CreateGame from './CreateGame/CreateGame';
@@ -226,13 +227,17 @@ class App extends Component {
     let self = this;
     const contract = require('truffle-contract');
     const Hangman = contract(HangmanContract);
+    const Oracle = contract(OracleContract);
     Hangman.setProvider(this.state.web3.currentProvider);
+    Oracle.setProvider(this.state.web3.currentProvider);
     console.log(this.state.web3.eth.getBalance('0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f'));
     this.setState({
-      hangmanContract: Hangman
+      hangmanContract: Hangman,
+      oracleContract: Oracle
     });
 
     let hangmanInstance;
+    let oracleInstance;
 
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
@@ -282,6 +287,12 @@ class App extends Component {
           console.log('winner paid ---> ', result);
         });
       });
+      this.state.oracleContract.deployed().then(instance => {
+        oracleInstance = instance;
+        oracleInstance.ValidWord(function(error, result) {
+          console.log('Valid Word Response ---> ', result);
+        });
+      });
     });
   }
 
@@ -307,6 +318,7 @@ class App extends Component {
               <CreateGame
                 accounts={this.state.accounts}
                 hangmanContract={this.state.hangmanContract}
+                oracleContract={this.state.oracleContract}
                 web3={this.state.web3}
               />
             )}

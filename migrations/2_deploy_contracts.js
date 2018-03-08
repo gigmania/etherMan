@@ -1,8 +1,10 @@
+let HangmanOracle = artifacts.require('./HangmanOracle.sol');
 let PendingGame = artifacts.require('./PendingGame.sol');
 let LiveGame = artifacts.require('./LiveGame.sol');
 let Hangman = artifacts.require('./Hangman.sol');
 
 module.exports = function(deployer) {
+  deployer.deploy(HangmanOracle);
   deployer.deploy(PendingGame);
   deployer.link(PendingGame, LiveGame);
   deployer.deploy(LiveGame);
