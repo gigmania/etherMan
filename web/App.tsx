@@ -692,6 +692,7 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
   const ready = useCanTransact();
   const tx = useTransaction();
   const [word, setWord] = useState("");
+  const [showWord, setShowWord] = useState(false);
   const [stake, setStake] = useState("0.001");
   const [misses, setMisses] = useState(6);
   const [recovery, setRecovery] = useState<Recovery>();
@@ -785,17 +786,28 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
             <label htmlFor="secret-word">
               Your secret word <LockKeyhole size={14} />
             </label>
-            <input
-              id="secret-word"
-              type="password"
-              autoComplete="new-password"
-              spellCheck={false}
-              maxLength={12}
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              placeholder="A word worth guessing"
-              aria-describedby="word-hint"
-            />
+            <div className="secret-word-input">
+              <input
+                id="secret-word"
+                type={showWord ? "text" : "password"}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={12}
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                placeholder="A word worth guessing"
+                aria-describedby="word-hint"
+              />
+              <button
+                type="button"
+                className="text-button word-visibility-toggle"
+                aria-controls="secret-word"
+                onClick={() => setShowWord((visible) => !visible)}
+              >
+                {showWord ? "Hide word" : "Show word"}
+              </button>
+            </div>
             <p id="word-hint">
               3–12 lowercase letters. Only a salted commitment goes on-chain
               now.

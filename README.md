@@ -33,6 +33,32 @@ Open the local URL printed by Vite (normally http://127.0.0.1:5173). Practice mo
 
 Anvil state is ephemeral. Restarting it removes local games and deployments; run `deploy:local` again and update `.env.local` if the address changes. The deploy script only accepts the Anvil process at loopback port 8545 with chain ID 31337. It uses unlocked local accounts and has no private-key or remote-network option.
 
+## Scroll development target
+
+Scroll is the selected deployment target. Its mainnet chain ID is `534352`, but
+mainnet signing remains disabled in this candidate. Scroll Sepolia was retired
+after July 30, 2026; do not configure its old RPC for new deployments. See the
+[official network documentation](https://docs.scroll.io/en/developers).
+
+For local rehearsal using Scroll state, stop your existing Anvil process and
+start this instead of `npm run chain`:
+
+```sh
+npm run chain:scroll
+```
+
+Then follow the same `deploy:local` and frontend steps above. This runs Anvil on
+loopback with local chain ID `31337`, reads upstream Scroll state, and executes
+transactions locally using test ETH. It does not deploy or broadcast to Scroll.
+The fork needs a working upstream RPC. For reproducible runs, append
+`-- --fork-block-number <block>` and record the block; the provider must retain
+that block's state. Restarting replaces the local session and requires redeploying.
+
+Anvil executes its own EVM: this rehearsal does not reproduce Scroll's prover,
+sequencer, finality, opcode differences, or complete L1 data fees. Native Scroll
+execution and fee validation remain release gates. The proposed private
+dictionary-membership proof and outage-safe timeout design are also outstanding.
+
 ## Game rules
 
 - The creator selects 3–12 lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. Dictionary membership is not enforced; agree on acceptable words with your opponent.

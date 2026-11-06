@@ -1002,6 +1002,19 @@ input::placeholder {
   font-size: 11px;
   color: #a6b594;
 }
+.secret-word-input {
+  position: relative;
+}
+.secret-word-input input {
+  padding-right: 100px;
+}
+.word-visibility-toggle {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  height: 100%;
+  padding: 0 4px;
+}
 .backup-box {
   border: 1px solid #465331;
   background: #222a1a;

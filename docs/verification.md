@@ -2,7 +2,21 @@
 
 Local candidate on `codex/etherman-modernization`, based on legacy commit `2d3e58cc5356e0a836e25896258f1f4e162b5ad3`. Checks were performed before the modernization commit; no push or public deployment was performed. Checks below ran on November 6, 2026, with Node 26.3.0/npm 12.0.1 on macOS arm64. Recommended development runtime is Node 24.15+ LTS.
 
-## Executed checks
+## Scroll preparation follow-up — November 6, 2026
+
+After the modernization commit, added `chain:scroll` for local fork rehearsal.
+Verified the public Scroll RPC reports chain ID 534352. Started the new command
+on isolated loopback port 18545 with local chain ID 31337 at upstream block
+35,635,837. Deployed the existing compiled EtherMan artifact locally; its receipt
+succeeded and `nextGameId()` returned 1. Stopped the temporary fork afterward;
+the existing development chain was left running. TypeScript and diff whitespace
+checks passed. These checks do not cover full games, native Scroll execution,
+proving, finality, or live-network fees. No public transaction was sent.
+
+The historical review manifest below identifies the earlier reviewed candidate;
+it does not cover subsequent UI and package-script edits.
+
+## Executed checks (modernization baseline)
 
 | Check | Result |
 | --- | --- |
