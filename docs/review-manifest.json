@@ -1,0 +1,26 @@
+{
+  "fingerprint": "28002369a19e727c7e5f14efe8a32b8d2df8b91d15953a2a58bd9d0c2fe9d6e1",
+  "files": {
+    "contracts-v2/EtherMan.sol": "5ed0235efe0b5b9cd4d7f32043a5de8e867bd411bb5da6b8b4edd91f42e23bcc",
+    "foundry.toml": "38b0111c90cb8693d202d5857b487e25fda9a2603e9eee24c9d3ebfee62b20da",
+    "index.html": "069964bb7896ead39f7068d0f2d2141ad8dad80bf7f75e51483f005483683626",
+    "package-lock.json": "949220ebf72ed1151fd672218e8ba39bb383732502c8f139d786b3771c13c691",
+    "package.json": "43bc622071ab543af350c5f4daca84bc3f4570148dc5f3463398d5434836ec5a",
+    "test-v2/EtherMan.t.sol": "c1fd9e12c8f1ec65015a800b21761b8b33134af05d9a3bc1cbc66da87336c01e",
+    "tools/compile.mjs": "7644e8d9ed6dde9c6d4d1b171fdd77d9f50b1ad4d4278cc1f6798f8bb83f136f",
+    "tools/deploy-local.mjs": "b4f485cf154729d78dc9041fed7e8cda0bf0d2b8eb2608ed066a7967db1aaca1",
+    "tools/foundry.mjs": "2eeef0c317b61ea7386bfe33d565f66cd93a4452c1c312ec4b7fe5ac5820866d",
+    "tsconfig.json": "d3aa694a8c9f649d59e549437a1bad49f7ff9a6095f1a5a646a580994485eef5",
+    "vite.config.ts": "375438194b62b61a9c0baa5bba8f40eced0aa95305494be7afcf0041d1f32dc5",
+    "web/App.tsx": "a1f0bb1ce5602d21f98d983048af4cf942ae6fbc0a7be09d67dacbbd05e9e73c",
+    "web/chain.test.tsx": "453f07f651e5ae0aaa2733e4224db469cd611382c9be3db786e57f39544ea5f6",
+    "web/chain.tsx": "ae53376c1e9f2458f84edc1dd71187060ca8f2d5bd17993ecbd12695c13b49b2",
+    "web/config.ts": "96b0c4c0bd0f4621b385024481e16a680a7b16bd00802799030e9c0db85a8cef",
+    "web/create-game.test.tsx": "1969a932ff9c45ab1dc42e0ad56fd311858c47d771f6587dd5140bb349ddbedd",
+    "web/domain.test.ts": "257362dece3cb77f61dec19977426d139e6f5fee99efdf39a6ce26baaa826f37",
+    "web/domain.ts": "764d0edff5a27b6db701a66816ac585a22f8a35c7bf77eb16300d1c94010728a",
+    "web/main.tsx": "39ef998d33fd5ffe2a65919a39742d114b5156dd47ac166801bbcd4554f3a0f7",
+    "web/styles.css": "9e6d40c5e4527f75a1489d9ce1cd0c23bc84e573cf637a324ea737468629c507",
+    "web/vite-env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+  }
+}

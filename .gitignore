@@ -1,2 +1,13 @@
 node_modules/
 .DS_Store
+dist/
+out/
+cache/
+artifacts/
+.env
+.env.local
+.env.*.local
+coverage/
+test-results/
+playwright-report/
+.tools/
