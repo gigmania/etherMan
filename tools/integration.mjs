@@ -4,19 +4,30 @@ import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import net from 'node:net'
 import { pathToFileURL } from 'node:url'
-import { createPublicClient, createWalletClient, encodeAbiParameters, http, keccak256, parseEther, toHex } from 'viem'
+import { createPublicClient, createWalletClient, encodeAbiParameters, http, keccak256, parseEther, toHex, TransactionReceiptNotFoundError } from 'viem'
 import { foundry } from 'viem/chains'
 import { foundryBinary } from './foundry.mjs'
 
 /** Isolated, disposable chain. Uses Anvil's unlocked local accounts, never private keys. */
-export async function startChain() {
+export async function startChain({ scrollFork = false } = {}) {
+  const forkArgs = []
+  if (scrollFork) {
+    // The upstream client only reads. All test transactions use loopback below.
+    const upstream = createPublicClient({ transport: http('https://rpc.scroll.io', { timeout: 15000, retryCount: 0 }) })
+    assert.equal(await upstream.getChainId(), 534352, 'Fork source must be Scroll mainnet')
+    const block = await upstream.getBlockNumber({ cacheTime: 0 })
+    // Default Anvil addresses can already have delegated code on the real chain.
+    // Fresh local accounts avoid inheriting that code, nonces, or account history.
+    forkArgs.push('--fork-url', 'https://rpc.scroll.io', '--fork-block-number', String(block), '--mnemonic-random')
+    console.log(`Scroll state fork pinned to block ${block}; transactions execute on local chain 31337.`)
+  }
   const reservation = net.createServer()
   reservation.listen(0, '127.0.0.1')
   await once(reservation, 'listening')
   const port = reservation.address().port
   await new Promise(resolve => reservation.close(resolve))
   const url = `http://127.0.0.1:${port}`
-  const child = spawn(foundryBinary('anvil'), ['--host', '127.0.0.1', '--port', String(port), '--chain-id', '31337', '--silent'], { stdio: ['ignore', 'pipe', 'pipe'] })
+  const child = spawn(foundryBinary('anvil'), ['--host', '127.0.0.1', '--port', String(port), '--chain-id', '31337', ...forkArgs, '--silent'], { stdio: ['ignore', 'pipe', 'pipe'] })
   let logs = ''
   let spawnError
   child.on('error', error => { spawnError = error })
@@ -30,7 +41,7 @@ export async function startChain() {
     await exited
     clearTimeout(force)
   }
-  const client = createPublicClient({ chain: foundry, transport: http(url, { retryCount: 0, timeout: 1000 }), pollingInterval: 50 })
+  const client = createPublicClient({ chain: foundry, transport: http(url, { retryCount: 0, timeout: scrollFork ? 15000 : 1000 }), pollingInterval: 50 })
   try {
     let ready = false
     for (let i = 0; i < 100; i++) {
@@ -43,23 +54,37 @@ export async function startChain() {
     if (!ready) throw new Error(`Anvil did not start: ${logs}`)
     const accounts = await client.request({ method: 'eth_accounts' })
     const wallets = accounts.slice(0, 4).map(account => createWalletClient({ account, chain: foundry, transport: http(url) }))
-    return { client, wallets, accounts, url, stop }
+    const waitForReceipt = async ({ hash }) => {
+      if (!scrollFork) return client.waitForTransactionReceipt({ hash })
+      // A fork may expose the new block before its receipt is readable. Anvil
+      // mines only on transactions, so waiting for another block can stall.
+      // These isolated unlocked-account tests do not replace transactions.
+      const deadline = Date.now() + 30000
+      do {
+        try { return await client.getTransactionReceipt({ hash }) }
+        catch (error) { if (!(error instanceof TransactionReceiptNotFoundError)) throw error }
+        await new Promise(resolve => setTimeout(resolve, 100))
+      } while (Date.now() < deadline)
+      throw new Error(`Local fork receipt not found within 30 seconds: ${hash}`)
+    }
+    return { client, wallets, accounts, url, stop, waitForReceipt }
   } catch (error) { await stop(); throw error }
 }
 
 export async function deploy(chain) {
   const artifact = JSON.parse(await readFile('artifacts/EtherMan.json', 'utf8'))
   const hash = await chain.wallets[0].deployContract({ abi: artifact.abi, bytecode: artifact.bytecode })
-  const receipt = await chain.client.waitForTransactionReceipt({ hash })
+  const receipt = await chain.waitForReceipt({ hash })
   assert.equal(receipt.status, 'success')
   assert.ok(receipt.contractAddress)
   return { address: receipt.contractAddress, abi: artifact.abi }
 }
 
-export async function integration() {
-  const chain = await startChain()
+export async function integration(options = {}) {
+  const chain = await startChain(options)
   try {
     const contract = await deploy(chain)
+    console.log(`Deployed test contract at ${contract.address}`)
     const { client, wallets, accounts } = chain
     const read = (functionName, args = []) => client.readContract({ ...contract, functionName, args })
     const send = async (actor, functionName, args = [], value) => {
@@ -69,7 +94,7 @@ export async function integration() {
       // when a changed timestamp turns a no-op deadline SSTORE into a real write.
       const estimated = await client.estimateContractGas({ ...contract, functionName, args, account: accounts[actor], ...(value === undefined ? {} : { value }) })
       const hash = await wallets[actor].writeContract({ ...request, gas: estimated + estimated / 4n + 5000n })
-      const receipt = await client.waitForTransactionReceipt({ hash })
+      const receipt = await chain.waitForReceipt({ hash })
       assert.equal(receipt.status, 'success', `${functionName} reverted`)
       return receipt
     }
@@ -114,7 +139,7 @@ export async function integration() {
     await fails(1, 'joinGame', [solved.id], stake + 1n, 'InvalidStake')
     // Verify an actual mined underfunded transaction also reverts and preserves escrow.
     const invalidHash = await wallets[1].writeContract({ ...contract, functionName: 'joinGame', args: [solved.id], value: 0n, gas: 300_000n })
-    assert.equal((await client.waitForTransactionReceipt({ hash: invalidHash })).status, 'reverted')
+    assert.equal((await chain.waitForReceipt({ hash: invalidHash })).status, 'reverted')
     assert.equal((await read('getGame', [solved.id])).state, 0)
     await send(1, 'joinGame', [solved.id], stake)
     await fails(2, 'joinGame', [solved.id], stake, 'InvalidState')
@@ -207,7 +232,7 @@ export async function integration() {
     const estimate = await client.estimateContractGas({ ...contract, functionName: 'guess', args: [timing.id, 2], account: accounts[1] })
     await client.request({ method: 'evm_setNextBlockTimestamp', params: [Number(joinedBlock.timestamp + 1n)] })
     const paddedHash = await wallets[1].writeContract({ ...contract, functionName: 'guess', args: [timing.id, 2], gas: estimate + estimate / 4n + 5000n })
-    const paddedReceipt = await client.waitForTransactionReceipt({ hash: paddedHash })
+    const paddedReceipt = await chain.waitForReceipt({ hash: paddedHash })
     assert.equal(paddedReceipt.status, 'success', 'Wallet gas margin must cover timestamp-dependent deadline storage cost')
     assert.equal((await read('getGame', [timing.id])).state, 2)
     await send(0, 'respond', [timing.id, 2, 1])
@@ -225,7 +250,7 @@ export async function integration() {
     // A delayed retry of the successful z miss must not answer the new c turn.
     await fails(0, 'respond', [stale.id, 25, 0], undefined, 'InvalidInput')
     const staleHash = await wallets[0].writeContract({ ...contract, functionName: 'respond', args: [stale.id, 25, 0], gas: 300_000n })
-    assert.equal((await client.waitForTransactionReceipt({ hash: staleHash })).status, 'reverted')
+    assert.equal((await chain.waitForReceipt({ hash: staleHash })).status, 'reverted')
     const afterRetry = await read('getGame', [stale.id])
     assert.equal(afterRetry.state, 2)
     assert.equal(afterRetry.pendingLetter, 2)
@@ -247,5 +272,9 @@ export async function integration() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  integration().catch(error => { console.error(error); process.exitCode = 1 })
+  const args = process.argv.slice(2)
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--scroll-fork')) {
+    throw new Error('Usage: node tools/integration.mjs [--scroll-fork]')
+  }
+  integration({ scrollFork: args[0] === '--scroll-fork' }).catch(error => { console.error(error); process.exitCode = 1 })
 }

@@ -13,6 +13,28 @@ the existing development chain was left running. TypeScript and diff whitespace
 checks passed. These checks do not cover full games, native Scroll execution,
 proving, finality, or live-network fees. No public transaction was sent.
 
+### Full Scroll state-fork rehearsal
+
+`npm run test:integration:scroll` rebuilt the contract and passed all eight
+integration scenarios at upstream Scroll block 35,635,940, executing only on
+disposable local Anvil (chain ID 31337). The ordinary `test:integration` suite
+also passed all eight scenarios after the helper changes. Unknown CLI options
+were checked to exit unsuccessfully before starting a chain.
+All five Playwright browser tests passed with the shared helper changes.
+
+Initial fork runs exposed inherited EIP-7702 delegation at three standard Anvil
+test addresses. A minimal local transfer to the fourth default account also
+reproduced the unexpected balance change without EtherMan. Fork commands now
+generate fresh local accounts instead of inheriting those accounts' code and
+history. A separate receipt-timing issue stalled the block-driven receipt
+waiter after a block became visible before its receipt. Fork tests now poll the
+specific receipt directly with a 30-second polling deadline, retrying only receipt-not-found
+errors. Production wallet transaction handling has not changed.
+
+These are state-fork tests, not native Scroll execution or proving evidence;
+no Scroll mainnet transaction was submitted. The dictionary verifier, outage
+policy, actual Scroll fees, and native execution validation remain outstanding.
+
 The historical review manifest below identifies the earlier reviewed candidate;
 it does not cover subsequent UI and package-script edits.
 

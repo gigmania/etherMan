@@ -54,10 +54,22 @@ The fork needs a working upstream RPC. For reproducible runs, append
 `-- --fork-block-number <block>` and record the block; the provider must retain
 that block's state. Restarting replaces the local session and requires redeploying.
 
+Each fork starts with fresh local development accounts. Use the test accounts
+printed by that Anvil session for wallet setup; they change on restart. This
+avoids inheriting delegated code and transaction history at the publicly known
+default Anvil addresses on Scroll. These generated accounts are for local test
+ETH only, and their keys must never be used for real funds.
+
 Anvil executes its own EVM: this rehearsal does not reproduce Scroll's prover,
 sequencer, finality, opcode differences, or complete L1 data fees. Native Scroll
 execution and fee validation remain release gates. The proposed private
 dictionary-membership proof and outage-safe timeout design are also outstanding.
+
+Run the eight gameplay integration scenarios against a disposable Scroll state
+fork with `npm run test:integration:scroll`. The command rebuilds the contract,
+checks the upstream chain ID, prints and pins the upstream block, uses a separate
+loopback port, and stops its fork when finished. It needs network access for
+read-only RPC requests; the ordinary `test:integration` command stays local.
 
 ## Game rules
 

@@ -13,11 +13,12 @@
     "test": "vitest run",
     "test:contracts": "node tools/foundry.mjs forge test",
     "test:integration": "node tools/integration.mjs",
+    "test:integration:scroll": "npm run contracts:build && node tools/integration.mjs --scroll-fork",
     "test:e2e": "playwright test",
     "check": "npm run build && npm test && npm run test:contracts && npm run test:integration",
     "contracts:build": "node tools/compile.mjs",
     "chain": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337",
-    "chain:scroll": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337 --fork-url https://rpc.scroll.io",
+    "chain:scroll": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337 --fork-url https://rpc.scroll.io --mnemonic-random",
     "deploy:local": "npm run contracts:build && node tools/deploy-local.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
