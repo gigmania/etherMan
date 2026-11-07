@@ -15,24 +15,33 @@ Use `npm run chain:scroll` for local fork rehearsals, retaining local chain ID
 results are Anvil execution evidence, not proof of Scroll execution/proving
 compatibility or live-network fee behavior. Before a public deployment, establish
 a maintained Scroll-native rehearsal environment and validate the actual
-compiler output and proposed dictionary verifier there.
+compiler output and implemented dictionary verifier there.
 
 Before launch, measure complete-game costs including L1 data fees, distinguish
 L2 inclusion from L1 finality in the UI, and resolve outage handling for 24-hour
-turns. Dictionary enforcement at creation remains planned, not implemented.
+turns. Dictionary enforcement is implemented in the local candidate, but is not
+publicly deployed or externally audited. The fixed 240,784-word vocabulary comes
+from `word-list@4.1.0` with MIT/CC0-1.0 provenance retained in `dictionary/`.
+The constructor fixes the root and verifier; neither can be updated by an admin.
+A vocabulary, circuit, or verifier change requires a new deployment.
+
+The proof uses Noir 1.0.0 and Barretenberg 6.0.0 in zero-knowledge EVM mode and is
+8,768 bytes. The generated Solidity verifier measured about 3.84 million gas on
+local Anvil. This is neither a full creation estimate nor a Scroll fee quote.
+Record browser time/memory and actual Scroll execution/data fees before launch.
 
 ## Before testnet
 
-1. Confirm whether any legacy deployment exists, its network/address, deployed bytecode, ownership, balance and active users. Repository metadata only records network 4447 and does not prove that other deployments do not exist.
-2. Approve the candidate rules: interactive creator, 24-hour turns, seven-day expiry, 3–12 lowercase letters, 1–8 misses, maximum 1 ETH stake, zero fee, no dictionary enforcement, no administrator or upgrade proxy.
-3. Complete the automated checks and independent code/security review on a fixed source revision. Record compiler, optimizer, EVM target, ABI, runtime bytecode and dependency lockfile hashes.
+1. Confirm whether any legacy deployment exists, its network/address, deployed bytecode, ownership, balance and active users. The user believes the original app was testnet-only, so a fresh deployment is the working assumption; no address has been supplied to verify it. Repository metadata only records network 4447 and does not prove that other deployments do not exist.
+2. Approve the candidate rules: interactive creator, 24-hour turns, seven-day expiry, 3–12 lowercase letters, 1–8 misses, maximum 1 ETH stake, zero fee, private dictionary-proof enforcement, permanent commitment consumption, no administrator or upgrade proxy. Keep the current salted Keccak commitment and version-1 recovery format; existing games remain tied to their original contracts.
+3. Complete the automated checks and independent code/security review on a fixed source revision. Record compiler, optimizer, EVM target, ABI, runtime bytecode, circuit, verification key, linked verifier libraries, dictionary/root, proving assets and dependency lockfile hashes. Verify zero-knowledge mode and proving-parameter provenance. Mock-verifier tests alone do not establish cryptographic validity.
 4. Measure creation, per-letter response, worst-case reveal, timeout and withdrawal gas. Present expected complete-game transaction costs.
 5. Identify a maintained rehearsal environment for Scroll before preparing a public test deployment transaction, deployment owner, RPC, explorer verification, addresses and frontend configuration for approval. Ethereum Sepolia support in the current frontend is not a Scroll rehearsal. Do not place secrets in `VITE_*` variables: they are public browser configuration.
 
 ## Before mainnet
 
-1. Resolve all accepted release-blocking findings and obtain independent external contract security review.
-2. Rehearse complete games, rejection/revert recovery, account/network changes, lost recovery material, dishonest responses, elapsed deadlines and smart-contract-wallet withdrawals on testnet.
+1. Resolve all accepted release-blocking findings, including outage-safe 24-hour turns, and obtain independent external contract/circuit security review. Confirm the generated verifier, linked libraries, root, and browser proving assets match the reviewed artifacts.
+2. Rehearse complete games, real-proof acceptance/rejection, invalid words and altered inputs, copied proofs and replay, worker cancellation/stale results, rejection/revert recovery, account/network changes, lost recovery material, dishonest responses, elapsed deadlines and smart-contract-wallet withdrawals in a maintained Scroll-native rehearsal environment.
 3. Validate Scroll complete-game fees, including L2 execution and Ethereum data fees, against the product budget. Any different chain or off-chain protocol is a new explicit deployment/design decision.
 4. Establish monitoring for escrow/credit accounting, failed transactions, unclaimed credits, overdue games, RPC availability and frontend artifact integrity. Assign an operational owner and a user-support process.
 5. Evaluate product and jurisdiction requirements for a public wagered game with qualified advice before opening it to users.

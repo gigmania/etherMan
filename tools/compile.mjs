@@ -1,13 +1,19 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import solc from "solc";
 
 const compiler = solc.version();
 if (!compiler.startsWith("0.8.38+"))
   throw new Error(`Expected solc 0.8.38, got ${compiler}`);
-const source = await readFile("contracts-v2/EtherMan.sol", "utf8");
+const sources = {};
+for (const entry of await readdir("contracts-v2", { recursive: true })) {
+  if (entry.endsWith(".sol")) {
+    const path = `contracts-v2/${entry}`;
+    sources[path] = { content: await readFile(path, "utf8") };
+  }
+}
 const input = {
   language: "Solidity",
-  sources: { "contracts-v2/EtherMan.sol": { content: source } },
+  sources,
   settings: {
     optimizer: { enabled: true, runs: 200 },
     evmVersion: "cancun",
@@ -15,8 +21,8 @@ const input = {
       "*": {
         "*": [
           "abi",
-          "evm.bytecode.object",
-          "evm.deployedBytecode.object",
+          "evm.bytecode",
+          "evm.deployedBytecode",
           "metadata",
         ],
       },
@@ -26,6 +32,20 @@ const input = {
 const output = JSON.parse(solc.compile(JSON.stringify(input)));
 for (const error of output.errors ?? []) console.error(error.formattedMessage);
 if (output.errors?.some((error) => error.severity === "error")) process.exit(1);
+await mkdir("artifacts", { recursive: true });
+for (const [sourceName, contracts] of Object.entries(output.contracts)) {
+  for (const [name, compiled] of Object.entries(contracts)) {
+    if (!compiled.evm.bytecode.object) continue;
+    await writeFile(`artifacts/${name}.json`, JSON.stringify({
+      contractName: name, sourceName, compiler, abi: compiled.abi,
+      bytecode: `0x${compiled.evm.bytecode.object}`,
+      deployedBytecode: `0x${compiled.evm.deployedBytecode.object}`,
+      linkReferences: compiled.evm.bytecode.linkReferences,
+      deployedLinkReferences: compiled.evm.deployedBytecode.linkReferences,
+      metadata: JSON.parse(compiled.metadata),
+    }, null, 2) + "\n");
+  }
+}
 const contract = output.contracts["contracts-v2/EtherMan.sol"].EtherMan;
 const artifact = {
   contractName: "EtherMan",

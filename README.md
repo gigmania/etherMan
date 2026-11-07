@@ -8,6 +8,7 @@ Use Node 24 LTS, version 24.15 or newer (`.nvmrc`). Install pinned dependencies 
 
 ```sh
 npm ci
+npm run proof:build
 npm run contracts:build
 ```
 
@@ -62,8 +63,8 @@ ETH only, and their keys must never be used for real funds.
 
 Anvil executes its own EVM: this rehearsal does not reproduce Scroll's prover,
 sequencer, finality, opcode differences, or complete L1 data fees. Native Scroll
-execution and fee validation remain release gates. The proposed private
-dictionary-membership proof and outage-safe timeout design are also outstanding.
+execution and fee validation remain release gates. The private dictionary-membership proof is implemented and tested locally.
+Outage-safe timeout design remains outstanding.
 
 Run the eight gameplay integration scenarios against a disposable Scroll state
 fork with `npm run test:integration:scroll`. The command rebuilds the contract,
@@ -73,19 +74,23 @@ read-only RPC requests; the ordinary `test:integration` command stays local.
 
 ## Game rules
 
-- The creator selects 3–12 lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. Dictionary membership is not enforced; agree on acceptable words with your opponent.
+- The creator selects 3–12 lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. The word must belong to the fixed 240,784-word game dictionary. A private proof is verified before a game can be created.
 - The creator downloads a private recovery file before creating the game. It contains the answer and a random salt: keep it private and keep it until settlement. Losing it can forfeit the stake.
 - The challenger matches the exact stake. Each guess and response gets a 24-hour deadline. The creator must actively respond with **every** matching letter position.
 - Responses are provisional. After completion, concession, or challenger inactivity, the creator reveals the answer and salt. The contract verifies the commitment and every prior response before awarding funds.
 - A dishonest transcript or a missed creator response/reveal deadline awards the pot to the challenger. Challenger inactivity first requires a creator reveal; it does not bypass honesty checks.
 - Unjoined games can be cancelled by their creator; anyone can expire them after seven days. Funds become withdrawal credits. Claiming a deadline and withdrawing each require a transaction.
-- There is no protocol fee, administrator, upgrade proxy, oracle, or background automation. Network gas is additional to the stake. Both players need enough gas to finish or claim deadlines.
+- There is no protocol fee, administrator, upgrade proxy, external word oracle, or background automation. The dictionary root and proof verifier are immutable. Network gas is additional to the stake. Both players need enough gas to finish or claim deadlines.
+
+The proof is generated in a browser worker after you save the recovery file. It takes CPU and memory and can be cancelled before wallet submission. A commitment cannot be reused, even after cancellation. See [proof design and benchmarks](docs/dictionary-proof.md) for the accepted vocabulary, trust assumptions, and performance limits.
 
 Full transition rules and interfaces: [protocol](docs/protocol.md). Threat model and remaining release work: [security](docs/security.md), [release checklist](docs/release.md).
 
 ## Development and verification
 
 ```sh
+npm run proof:build        # reproduce dictionary tree, circuit, verifier, and browser assets
+npm run test:proof         # actual ZK proofs, Solidity verifier, altered-input and replay tests
 npm run build              # solc 0.8.38, generated ABI, TypeScript, production frontend
 npm test                   # frontend rules, values, secrets and interaction tests
 npm run test:contracts     # Foundry unit, fuzz and stateful accounting tests
@@ -97,7 +102,7 @@ npm audit                 # root dependency advisories
 
 Foundry binaries are pinned npm dependencies. Its first test run may download the pinned native Solidity compiler. The project wrapper propagates native test failure exit codes. `solc`'s `tmp` dependency is overridden to patched `0.2.7`; do not remove this override until upstream fixes the pin. Install scripts are not needed when the supported platform's optional Foundry binaries are installed.
 
-`npm run check` runs build, frontend, contract, and local-chain integration checks. Browser tests are a separate explicit command. Tests and scripts only use disposable/local chains; they never broadcast to mainnet or Sepolia.
+`npm run check` runs build, frontend, contract, actual-proof, and local-chain integration checks. Run `proof:build` first after a fresh checkout or a circuit/dictionary/toolchain change; it creates ignored assets under `public/zk/`. The first proving run fetches public CRS parameters from the backend's fixed CDN endpoints. It does not send the word, salt, or witness. Browser tests are a separate explicit command. Tests and scripts only use disposable/local chains; they never broadcast to mainnet or Sepolia.
 
 ## Layout
 

@@ -47,6 +47,7 @@ vi.mock("wagmi", () => ({
 }));
 import {
   TransactionProvider,
+  assertDictionaryDeployment,
   useDeployment,
   useGame,
   useTransaction,
@@ -264,4 +265,35 @@ it("reads the game and transcript at one pinned block", async () => {
     .filter((call) => ["getGame", "getGuesses"].includes(call.functionName));
   expect(reads).toHaveLength(2);
   expect(reads.every((call) => call.blockNumber === 88n)).toBe(true);
+});
+
+describe("dictionary deployment binding", () => {
+  const root = `0x${"ab".repeat(32)}`;
+  const verifier = "0x3333333333333333333333333333333333333333";
+  beforeEach(() => {
+    mocks.publicClient.readContract.mockImplementation(
+      async ({ functionName }) =>
+        functionName === "dictionaryRoot"
+          ? root
+          : functionName === "dictionaryVerifier"
+            ? verifier
+            : 1n,
+    );
+  });
+  it("requires the expected on-chain root and a deployed verifier", async () => {
+    await expect(assertDictionaryDeployment(root)).resolves.toBeUndefined();
+    expect(mocks.publicClient.getCode).toHaveBeenCalledWith({
+      address: verifier,
+    });
+    await expect(
+      assertDictionaryDeployment(`0x${"cd".repeat(32)}`),
+    ).rejects.toThrow("dictionary deployment changed");
+  });
+  it("rejects a missing verifier or changed RPC network", async () => {
+    mocks.publicClient.getCode.mockResolvedValue("0x");
+    await expect(assertDictionaryDeployment(root)).rejects.toThrow("not ready");
+    mocks.publicClient.getCode.mockResolvedValue("0x6000");
+    mocks.publicClient.getChainId.mockResolvedValue(1);
+    await expect(assertDictionaryDeployment(root)).rejects.toThrow("not ready");
+  });
 });

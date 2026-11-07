@@ -11,6 +11,11 @@ import { wordCommitment, type Game, type Recovery } from "./domain";
 import type { Address, Hex } from "viem";
 const mocks = vi.hoisted(() => ({
   run: vi.fn(),
+  checkWord: vi.fn(),
+  proveWord: vi.fn(),
+  assertDictionary: vi.fn(),
+  chainId: 31337,
+  root: "0x" + "12".repeat(32),
   useGame: vi.fn(),
   useCredits: vi.fn(),
   account: "0x1111111111111111111111111111111111111111",
@@ -24,7 +29,7 @@ vi.mock("./config", () => ({
 vi.mock("wagmi", () => ({
   useConnection: () => ({
     address: mocks.account,
-    chainId: 31337,
+    chainId: mocks.chainId,
     isConnected: true,
   }),
   useConnect: vi.fn(),
@@ -35,17 +40,35 @@ vi.mock("wagmi", () => ({
 vi.mock("./chain", () => ({
   useTransaction: () => ({ run: mocks.run, busy: false }),
   useDeployment: () => ({ data: true }),
+  useDictionaryRoot: () => ({ data: mocks.root }),
+  assertDictionaryDeployment: mocks.assertDictionary,
   useClock: () => 90,
   useCredits: mocks.useCredits,
   useGame: mocks.useGame,
   useGames: vi.fn(),
   TransactionProvider: vi.fn(),
 }));
+vi.mock("./dictionary", () => ({
+  checkDictionaryWord: mocks.checkWord,
+  proveDictionaryWord: mocks.proveWord,
+  DictionaryError: class DictionaryError extends Error {},
+  dictionaryErrors: {
+    assets: "Dictionary unavailable.",
+    proof: "Proof failed safely.",
+    cancelled: "Proof generation cancelled. No transaction was submitted.",
+  },
+}));
 import { CreateGame, Credits, GameView } from "./App";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.account = "0x1111111111111111111111111111111111111111";
+  mocks.chainId = 31337;
+  mocks.checkWord.mockReset().mockResolvedValue(undefined);
+  mocks.proveWord
+    .mockReset()
+    .mockResolvedValue({ proof: "0xabcd", publicInputs: [], timings: {} });
+  mocks.assertDictionary.mockReset().mockResolvedValue(undefined);
   mocks.useCredits.mockReturnValue({ data: 1n });
   vi.stubGlobal(
     "URL",
@@ -95,7 +118,7 @@ it("consumes a prepared secret before submission and retains it after uncertain 
   fireEvent.click(
     screen.getByRole("button", { name: /Download recovery file/ }),
   );
-  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(await screen.findByRole("checkbox"));
   const submit = screen.getByRole("button", {
     name: /Lock stake & create game/,
   }) as HTMLButtonElement;
@@ -106,6 +129,7 @@ it("consumes a prepared secret before submission and retains it after uncertain 
   expect(recoveries).toHaveLength(1);
   const first = recoveries[0];
   expect(mocks.run.mock.calls[0][2][0]).toBe(first.commitment);
+  expect(mocks.run.mock.calls[0][2][3]).toBe("0xabcd");
   expect(submit.disabled).toBe(true);
   expect(screen.queryByRole("checkbox")).toBeNull();
 
@@ -124,7 +148,7 @@ it("consumes a prepared secret before submission and retains it after uncertain 
     screen.getByRole("button", { name: /Download recovery file/ }),
   );
   expect(submit.disabled).toBe(true);
-  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(await screen.findByRole("checkbox"));
   fireEvent.click(submit);
   await waitFor(() => expect(mocks.run).toHaveBeenCalledTimes(2));
   expect(recoveries).toHaveLength(2);
@@ -217,4 +241,102 @@ it("clears the withdrawal recipient and validation error when the wallet account
   expect(mocks.run).toHaveBeenCalledWith("Withdraw balance", "withdrawTo", [
     mocks.account,
   ]);
+});
+
+async function prepareCreation() {
+  fireEvent.change(screen.getByLabelText(/Your secret word/), {
+    target: { value: "ether" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Download recovery file/ }),
+  );
+  fireEvent.click(await screen.findByRole("checkbox"));
+  return screen.getByRole("button", { name: /Lock stake & create game/ });
+}
+
+it("rejects a nondictionary word before generating a recovery file", async () => {
+  const { DictionaryError } = await import("./dictionary");
+  mocks.checkWord.mockRejectedValue(
+    new DictionaryError("Choose a word from this game's English dictionary."),
+  );
+  render(<CreateGame remember={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText(/Your secret word/), {
+    target: { value: "zzzzzz" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Download recovery file/ }),
+  );
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "game's English dictionary",
+  );
+  expect(screen.queryByRole("checkbox")).toBeNull();
+  expect(mocks.proveWord).not.toHaveBeenCalled();
+  expect(mocks.run).not.toHaveBeenCalled();
+});
+
+it("cancels proving without consuming the backup or submitting a transaction", async () => {
+  let resolveProof: (value: unknown) => void = () => {};
+  mocks.proveWord.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveProof = resolve;
+      }),
+  );
+  const remember = vi.fn();
+  render(<CreateGame remember={remember} />);
+  const submit = await prepareCreation();
+  fireEvent.click(submit);
+  await screen.findByRole("button", { name: "Cancel proof" });
+  const signal = mocks.proveWord.mock.calls[0][2] as AbortSignal;
+  fireEvent.click(screen.getByRole("button", { name: "Cancel proof" }));
+  expect(signal.aborted).toBe(true);
+  resolveProof({ proof: "0xabcd" });
+  await waitFor(() =>
+    expect(screen.queryByRole("button", { name: "Cancel proof" })).toBeNull(),
+  );
+  expect(mocks.run).not.toHaveBeenCalled();
+  expect(remember).not.toHaveBeenCalled();
+  expect(screen.getByRole("checkbox")).toBeTruthy();
+});
+
+it.each(["wallet", "word", "network"])(
+  "discards proof completion after a %s change",
+  async (change) => {
+    let resolveProof: (value: unknown) => void = () => {};
+    mocks.proveWord.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveProof = resolve;
+        }),
+    );
+    const remember = vi.fn();
+    const view = render(<CreateGame remember={remember} />);
+    fireEvent.click(await prepareCreation());
+    await screen.findByRole("button", { name: "Cancel proof" });
+    if (change === "wallet")
+      mocks.account = "0x3333333333333333333333333333333333333333";
+    if (change === "network") mocks.chainId = 11155111;
+    if (change === "word")
+      fireEvent.change(screen.getByLabelText(/Your secret word/), {
+        target: { value: "other" },
+      });
+    else view.rerender(<CreateGame remember={remember} />);
+    expect((mocks.proveWord.mock.calls[0][2] as AbortSignal).aborted).toBe(
+      true,
+    );
+    resolveProof({ proof: "0xabcd" });
+    await waitFor(() => expect(screen.queryByRole("checkbox")).toBeNull());
+    expect(mocks.run).not.toHaveBeenCalled();
+    expect(remember).not.toHaveBeenCalled();
+  },
+);
+
+it("does not start concurrent proofs on repeated submits", async () => {
+  mocks.proveWord.mockImplementation(() => new Promise(() => {}));
+  render(<CreateGame remember={vi.fn()} />);
+  const submit = await prepareCreation();
+  fireEvent.submit(submit.closest("form")!);
+  fireEvent.submit(submit.closest("form")!);
+  expect(mocks.proveWord).toHaveBeenCalledTimes(1);
+  expect(mocks.run).not.toHaveBeenCalled();
 });

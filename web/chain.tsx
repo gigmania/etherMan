@@ -46,6 +46,47 @@ export function useDeployment() {
     },
   });
 }
+// Dictionary support is creation-only: older games still need reveal/withdrawal.
+async function readDictionaryRoot(): Promise<Hex> {
+  if (
+    !contractAddress ||
+    !networkAllowed ||
+    (await publicClient.getChainId()) !== targetChain.id
+  )
+    throw new Error("The dictionary deployment is not ready.");
+  const root = (await publicClient.readContract({
+    address: contractAddress,
+    abi,
+    functionName: "dictionaryRoot",
+  })) as Hex;
+  const verifier = (await publicClient.readContract({
+    address: contractAddress,
+    abi,
+    functionName: "dictionaryVerifier",
+  })) as Hex;
+  if (!/^0x[0-9a-f]{64}$/i.test(root) || !/^0x[0-9a-f]{40}$/i.test(verifier))
+    throw new Error("The dictionary deployment is not ready.");
+  const code = await publicClient.getCode({ address: verifier });
+  if (!code || code === "0x")
+    throw new Error("The dictionary deployment is not ready.");
+  return root;
+}
+export function useDictionaryRoot() {
+  const deployment = useDeployment();
+  return useQuery({
+    queryKey: ["dictionary-root", targetChain.id, contractAddress],
+    enabled: deployment.data === true,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    queryFn: readDictionaryRoot,
+  });
+}
+export async function assertDictionaryDeployment(root: string) {
+  if ((await readDictionaryRoot()).toLowerCase() !== root.toLowerCase())
+    throw new Error(
+      "The dictionary deployment changed. Reload before creating a game.",
+    );
+}
 export function useGame(id?: bigint) {
   const deployment = useDeployment();
   return useQuery({

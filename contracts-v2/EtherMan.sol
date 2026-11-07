@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.38;
 
+interface IDictionaryVerifier {
+    function verify(bytes calldata proof, bytes32[] calldata publicInputs) external view returns (bool);
+}
+
 /// @title EtherMan — interactive, committed-word Hangman escrow
 /// @notice Local/testnet release candidate. A creator must answer turns and reveal
 /// the committed word. Responses are provisional until the whole transcript is checked.
 contract EtherMan {
+    uint256 public constant DICTIONARY_PROOF_BYTES = 8768;
+    uint256 private constant SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    address public immutable dictionaryVerifier;
+    bytes32 public immutable dictionaryRoot;
     uint256 public constant TURN_TIMEOUT = 1 days;
     uint256 public constant OPEN_TIMEOUT = 7 days;
     uint256 public constant MAX_STAKE = 1 ether;
@@ -33,6 +41,7 @@ contract EtherMan {
     mapping(uint256 => uint8[]) private responseLetters;
     mapping(uint256 => uint16[]) private responseMasks;
     mapping(address => uint256) public credits;
+    mapping(bytes32 => bool) public usedCommitments;
     uint256 public nextGameId = 1;
     uint256 public totalEscrow;
     uint256 public totalCredits;
@@ -50,6 +59,9 @@ contract EtherMan {
     error NoCredit();
     error TransferFailed();
     error Reentrancy();
+    error InvalidDictionaryConfiguration();
+    error InvalidDictionaryProof();
+    error CommitmentAlreadyUsed();
 
     event GameCreated(uint256 indexed gameId, address indexed creator, bytes32 commitment, uint256 stake, uint8 wordLength, uint8 maxMisses, uint256 deadline);
     event GameJoined(uint256 indexed gameId, address indexed challenger, uint256 deadline);
@@ -60,14 +72,43 @@ contract EtherMan {
     event GameCancelled(uint256 indexed gameId, address indexed creator, uint256 amount);
     event Withdrawn(address indexed account, address indexed recipient, uint256 amount);
 
+    constructor(address verifier, bytes32 root) {
+        if (verifier.code.length == 0 || uint256(root) == 0 || uint256(root) >= SNARK_SCALAR_FIELD) {
+            revert InvalidDictionaryConfiguration();
+        }
+        dictionaryVerifier = verifier;
+        dictionaryRoot = root;
+    }
+
     /// @dev abi.encode, not packed encoding. The salt must be cryptographically random.
     function computeCommitment(address creator, string calldata word, bytes32 salt) public view returns (bytes32) {
         return keccak256(abi.encode(block.chainid, address(this), creator, word, salt));
     }
 
-    function createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses) external payable returns (uint256 gameId) {
+    function createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses, bytes calldata dictionaryProof) external payable returns (uint256 gameId) {
         if (commitment == bytes32(0) || wordLength < 3 || wordLength > 12 || maxMisses == 0 || maxMisses > 8) revert InvalidInput();
         if (msg.value == 0 || msg.value > MAX_STAKE) revert InvalidStake();
+        if (usedCommitments[commitment]) revert CommitmentAlreadyUsed();
+        if (dictionaryProof.length != DICTIONARY_PROOF_BYTES) revert InvalidDictionaryProof();
+        // Construct all public inputs here. A caller cannot select another root,
+        // creator, contract, or chain. Full-width values use two 128-bit limbs.
+        bytes32[] memory publicInputs = new bytes32[](8);
+        publicInputs[0] = dictionaryRoot;
+        publicInputs[1] = bytes32(block.chainid >> 128);
+        publicInputs[2] = bytes32(uint256(uint128(block.chainid)));
+        publicInputs[3] = bytes32(uint256(uint160(address(this))));
+        publicInputs[4] = bytes32(uint256(uint160(msg.sender)));
+        publicInputs[5] = bytes32(uint256(wordLength));
+        publicInputs[6] = bytes32(uint256(commitment) >> 128);
+        publicInputs[7] = bytes32(uint256(uint128(uint256(commitment))));
+        // The view interface uses STATICCALL. A revert, malformed return, or
+        // rejected proof cannot consume a commitment or change escrow.
+        try IDictionaryVerifier(dictionaryVerifier).verify(dictionaryProof, publicInputs) returns (bool valid) {
+            if (!valid) revert InvalidDictionaryProof();
+        } catch {
+            revert InvalidDictionaryProof();
+        }
+        usedCommitments[commitment] = true;
         gameId = nextGameId++;
         Game storage game = games[gameId];
         game.creator = msg.sender;

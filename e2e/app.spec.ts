@@ -145,6 +145,7 @@ test('one-account wallet completes the game and withdrawal across rejection, cha
 })
 
 test('creator must save recovery before staking and secrets stay out of storage and creation calldata', async ({ page, request }) => {
+  test.setTimeout(120_000)
   const fixture: Fixture = await (await request.get('/__e2e-state')).json()
   await wallet(page, fixture, 2)
   await page.goto('/#create')
@@ -169,7 +170,7 @@ test('creator must save recovery before staking and secrets stay out of storage 
   const sent: string[] = []
   page.on('request', req => { if (req.postData()?.includes('eth_sendTransaction')) sent.push(req.postData()!) })
   await submit.click()
-  await expect(page.getByRole('heading', { name: 'Your challenge is waiting.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your challenge is waiting.' })).toBeVisible({ timeout: 90_000 })
   expect(sent.length).toBeGreaterThan(0)
   expect(sent.join('')).not.toContain('garden')
   expect(sent.join('')).not.toContain(Buffer.from('garden').toString('hex'))

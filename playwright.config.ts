@@ -9,5 +9,5 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: { command: 'node e2e/server.mjs', url: 'http://127.0.0.1:4173/__e2e-state', timeout: 30_000, reuseExistingServer: false },
+  webServer: { command: 'node e2e/server.mjs', url: 'http://127.0.0.1:4173/__e2e-state', timeout: 90_000, reuseExistingServer: false },
 })

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "dictionaryId": "etherman-english-v1",
+  "source": {
+    "name": "word-list",
+    "version": "4.1.0",
+    "repository": "https://github.com/sindresorhus/word-list",
+    "gitCommit": "60b5059f4782080b1b254ac6cca46bb5eb4902ea",
+    "file": "words.txt",
+    "sha256": "2df02fa8ed82d465482ae40c4f9cb52a713baa1d3bfdce1acb2a5fe30420eea8",
+    "byteLength": 2805374,
+    "npmTarball": "https://registry.npmjs.org/word-list/-/word-list-4.1.0.tgz",
+    "npmIntegrity": "sha512-4vtKyH8lGfaY8DHLTKQDfDxPixdK6BC/2W38TsPE07Wc8uPrMIbEO3quxBFSa2BfsDyG6pW47UEN/9tfYxN6BA==",
+    "license": "MIT",
+    "licenseFile": "licenses/word-list-MIT.txt",
+    "licenseSha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+  },
+  "upstream": {
+    "name": "Letterpress Word List",
+    "repository": "https://github.com/lorenbrichter/Words",
+    "gitCommit": "f4976d6a6d34beb431dec8d4b443a138f4dc8bee",
+    "file": "Words/en.txt",
+    "url": "https://raw.githubusercontent.com/lorenbrichter/Words/f4976d6a6d34beb431dec8d4b443a138f4dc8bee/Words/en.txt",
+    "sha256": "b78af5ad2f66bed4e64fd48334af7d5620a91c45e7a578c084b9b72f9abcd5dd",
+    "license": "CC0-1.0",
+    "licenseFile": "licenses/Letterpress-CC0-1.0.txt",
+    "licenseSha256": "36ffd9dc085d529a7e60e1276d73ae5a030b020313e6c5408593a6ae2af39673",
+    "note": "The package fetch script names atebits/Words, which redirects to lorenbrichter/Words. Every normalized entry was checked against this upstream snapshot."
+  },
+  "normalization": {
+    "encoding": "UTF-8",
+    "lineSplit": "Split source on CRLF or LF.",
+    "filter": "Keep only entire lines matching ^[a-z]{3,12}$. No case folding, trimming, Unicode normalization, stemming, or added entries.",
+    "deduplication": "Exact byte-identical entries.",
+    "ordering": "Ascending ASCII lexicographic order.",
+    "serialization": "One word per line using LF, including exactly one final LF."
+  },
+  "normalized": {
+    "file": "words.txt",
+    "sha256": "fa4d2310bcc2595705cd555be0ccdb73b390877dc670bcc8c3172f905112a7a9",
+    "wordCount": 240784,
+    "byteLength": 2301532,
+    "minimumLength": 3,
+    "maximumLength": 12
+  },
+  "limitations": [
+    "Membership means inclusion in this exact game vocabulary, not a universal judgment of English validity.",
+    "Upstream combines US, UK, and Australian spellings and may include obscure words and inflections.",
+    "The package applies profanity filters, but this is not a comprehensive moderation guarantee.",
+    "Proper names and newer technical terms may be absent. No Ethereum-specific terms were added."
+  ]
+}

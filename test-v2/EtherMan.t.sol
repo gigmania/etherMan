@@ -2,6 +2,7 @@
 pragma solidity 0.8.38;
 
 import {EtherMan} from "../contracts-v2/EtherMan.sol";
+import {MockDictionaryVerifier} from "./MockDictionaryVerifier.sol";
 
 interface Vm {
     function deal(address account, uint256 balance) external;
@@ -14,7 +15,7 @@ contract RejectingPlayer {
     EtherMan private immutable game;
     constructor(EtherMan instance) { game = instance; }
     function openAndCancel() external payable {
-        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3);
+        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(8768));
         game.cancelGame(id);
     }
     function withdraw(address payable recipient) external { game.withdrawTo(recipient); }
@@ -26,7 +27,7 @@ contract ReenteringPlayer {
     bool public blocked;
     constructor(EtherMan instance) { game = instance; }
     function attack() external payable {
-        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3);
+        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(8768));
         game.cancelGame(id);
         game.withdrawTo(payable(address(this)));
     }
@@ -46,7 +47,7 @@ contract EtherManTest {
     EtherMan private game;
 
     function setUp() public {
-        game = new EtherMan();
+        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
         vm.deal(CREATOR, 100 ether);
         vm.deal(CHALLENGER, 100 ether);
         vm.deal(OUTSIDER, 100 ether);
@@ -54,9 +55,13 @@ contract EtherManTest {
     }
 
     function _open(string memory word, uint8 length, uint8 misses) private returns (uint256 id) {
-        bytes32 commitment = game.computeCommitment(CREATOR, word, SALT);
+        bytes32 commitment = game.computeCommitment(CREATOR, word, _salt(game.nextGameId()));
         vm.prank(CREATOR);
-        id = game.createGame{value: STAKE}(commitment, length, misses);
+        id = game.createGame{value: STAKE}(commitment, length, misses, new bytes(8768));
+    }
+
+    function _salt(uint256 id) private pure returns (bytes32) {
+        return id == 1 ? SALT : keccak256(abi.encode(SALT, id));
     }
 
     function _join(uint256 id) private {
@@ -73,7 +78,7 @@ contract EtherManTest {
 
     function _reveal(uint256 id, string memory word) private {
         vm.prank(CREATOR);
-        game.reveal(id, word, SALT);
+        game.reveal(id, word, _salt(id));
     }
 
     function _assertAccounting() private view {
@@ -164,6 +169,7 @@ contract EtherManTest {
         require(game.getGame(id).winner == CHALLENGER, "fabrication loses");
     }
 
+    // Mock-only defense-in-depth: a real dictionary proof rejects these creations.
     function testInvalidCommittedWordAndWrongLengthLose() public {
         uint256 id = _open("BANANA", 6, 3);
         _join(id);
@@ -255,21 +261,21 @@ contract EtherManTest {
         vm.expectRevert(EtherMan.UnknownGame.selector);
         game.getGuesses(1);
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(bytes32(0), 3, 3);
+        game.createGame{value: STAKE}(bytes32(0), 3, 3, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 2, 3);
+        game.createGame{value: STAKE}(SALT, 2, 3, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 13, 3);
+        game.createGame{value: STAKE}(SALT, 13, 3, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 3, 0);
+        game.createGame{value: STAKE}(SALT, 3, 0, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 3, 9);
+        game.createGame{value: STAKE}(SALT, 3, 9, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidStake.selector);
-        game.createGame(SALT, 3, 3);
+        game.createGame(SALT, 3, 3, new bytes(8768));
         vm.expectRevert(EtherMan.InvalidStake.selector);
-        game.createGame{value: 1 ether + 1}(SALT, 3, 3);
-        game.createGame{value: 1}(SALT, 12, 8);
-        game.createGame{value: 1 ether}(SALT, 3, 1);
+        game.createGame{value: 1 ether + 1}(SALT, 3, 3, new bytes(8768));
+        game.createGame{value: 1}(SALT, 12, 8, new bytes(8768));
+        game.createGame{value: 1 ether}(bytes32(uint256(2)), 3, 1, new bytes(8768));
     }
 
     function testAuthorizationDuplicatesAndResponseBounds() public {
@@ -474,7 +480,7 @@ contract EtherManTest {
         bytes32 original = game.computeCommitment(CREATOR, "banana", SALT);
         require(original == keccak256(abi.encode(block.chainid, address(game), CREATOR, "banana", SALT)), "ABI encoding");
         require(original != game.computeCommitment(CHALLENGER, "banana", SALT), "creator domain");
-        EtherMan other = new EtherMan();
+        EtherMan other = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
         require(original != other.computeCommitment(CREATOR, "banana", SALT), "contract domain");
     }
 
@@ -499,9 +505,9 @@ contract EtherManTest {
         uint256 firstStake = uint256(firstSeed) % 1 ether + 1;
         uint256 secondStake = uint256(secondSeed) % 1 ether + 1;
         vm.prank(CREATOR);
-        uint256 first = game.createGame{value: firstStake}(SALT, 3, 3);
+        uint256 first = game.createGame{value: firstStake}(SALT, 3, 3, new bytes(8768));
         vm.prank(CHALLENGER);
-        uint256 second = game.createGame{value: secondStake}(SALT, 3, 3);
+        uint256 second = game.createGame{value: secondStake}(bytes32(uint256(2)), 3, 3, new bytes(8768));
         vm.prank(CREATOR);
         game.cancelGame(first);
         vm.prank(CREATOR);
@@ -535,7 +541,7 @@ contract EtherManHandler {
         bytes32 salt = keccak256(abi.encode(game.nextGameId(), actor));
         bytes32 commitment = game.computeCommitment(actor, "banana", salt);
         vm.prank(actor);
-        uint256 id = game.createGame{value: uint256(stakeSeed) % 1 ether + 1}(commitment, 6, 3);
+        uint256 id = game.createGame{value: uint256(stakeSeed) % 1 ether + 1}(commitment, 6, 3, new bytes(8768));
         salts[id] = salt;
     }
 
@@ -609,7 +615,7 @@ contract EtherManInvariantTest {
     EtherManHandler private handler;
 
     function setUp() public {
-        game = new EtherMan();
+        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
         handler = new EtherManHandler(game);
     }
 
@@ -625,6 +631,7 @@ contract EtherManInvariantTest {
         uint256 escrow;
         for (uint256 id = 1; id < game.nextGameId(); ++id) {
             EtherMan.Game memory info = game.getGame(id);
+            require(game.usedCommitments(info.commitment), "created commitment remains consumed");
             if (info.state == EtherMan.State.Open) escrow += info.stake;
             else if (info.state != EtherMan.State.Settled && info.state != EtherMan.State.Cancelled) escrow += 2 * info.stake;
             if (info.state == EtherMan.State.Settled) {

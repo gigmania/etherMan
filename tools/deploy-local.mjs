@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { deployBundle } from "./deploy-bundle.mjs";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { foundry } from "viem/chains";
 
@@ -12,20 +12,13 @@ if (!version.toLowerCase().includes("anvil"))
   throw new Error("This deploy script only supports local Anvil.");
 const accounts = await client.request({ method: "eth_accounts" });
 if (!accounts[0]) throw new Error("Start npm run chain before deploying.");
-const artifact = JSON.parse(await readFile("artifacts/EtherMan.json", "utf8"));
 const wallet = createWalletClient({
   account: accounts[0],
   chain: foundry,
   transport: http(url),
 });
-const hash = await wallet.deployContract({
-  abi: artifact.abi,
-  bytecode: artifact.bytecode,
-});
-const receipt = await client.waitForTransactionReceipt({ hash });
-if (receipt.status !== "success" || !receipt.contractAddress)
-  throw new Error("Local deployment failed.");
-console.log(`Local EtherMan deployed at ${receipt.contractAddress}`);
+const game = await deployBundle({ client, wallet, waitForReceipt: args => client.waitForTransactionReceipt(args) });
+console.log(`Local dictionary-validated EtherMan deployed at ${game.address}`);
 console.log(
-  `Set in .env.local, then restart Vite:\nVITE_CHAIN_ID=31337\nVITE_RPC_URL=${url}\nVITE_CONTRACT_ADDRESS=${receipt.contractAddress}`,
+  `Set in .env.local, then restart Vite:\nVITE_CHAIN_ID=31337\nVITE_RPC_URL=${url}\nVITE_CONTRACT_ADDRESS=${game.address}`,
 );

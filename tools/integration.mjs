@@ -7,6 +7,8 @@ import { pathToFileURL } from 'node:url'
 import { createPublicClient, createWalletClient, encodeAbiParameters, http, keccak256, parseEther, toHex, TransactionReceiptNotFoundError } from 'viem'
 import { foundry } from 'viem/chains'
 import { foundryBinary } from './foundry.mjs'
+import { deployBundle } from './deploy-bundle.mjs'
+import { createProver } from './prover.mjs'
 
 /** Isolated, disposable chain. Uses Anvil's unlocked local accounts, never private keys. */
 export async function startChain({ scrollFork = false } = {}) {
@@ -72,17 +74,14 @@ export async function startChain({ scrollFork = false } = {}) {
 }
 
 export async function deploy(chain) {
-  const artifact = JSON.parse(await readFile('artifacts/EtherMan.json', 'utf8'))
-  const hash = await chain.wallets[0].deployContract({ abi: artifact.abi, bytecode: artifact.bytecode })
-  const receipt = await chain.waitForReceipt({ hash })
-  assert.equal(receipt.status, 'success')
-  assert.ok(receipt.contractAddress)
-  return { address: receipt.contractAddress, abi: artifact.abi }
+  return deployBundle({ client: chain.client, wallet: chain.wallets[0], waitForReceipt: chain.waitForReceipt })
 }
 
 export async function integration(options = {}) {
   const chain = await startChain(options)
+  let prover
   try {
+    prover = await createProver()
     const contract = await deploy(chain)
     console.log(`Deployed test contract at ${contract.address}`)
     const { client, wallets, accounts } = chain
@@ -119,7 +118,8 @@ export async function integration(options = {}) {
       const commitment = keccak256(encodeAbiParameters([{ type: 'uint256' }, { type: 'address' }, { type: 'address' }, { type: 'string' }, { type: 'bytes32' }], [31337n, contract.address, accounts[0], word, salt]))
       assert.equal(await read('computeCommitment', [accounts[0], word, salt]), commitment, 'Frontend-compatible commitment encoding must agree with contract')
       const id = await read('nextGameId')
-      await send(0, 'createGame', [commitment, word.length, maxMisses], stake)
+      const { proof } = await prover.prove({ version: 1, chainId: 31337, contract: contract.address, creator: accounts[0], word, salt, commitment })
+      await send(0, 'createGame', [commitment, word.length, maxMisses, proof], stake)
       const game = await read('getGame', [id])
       assert.equal(game.stake, stake, 'Exact wei must survive ABI roundtrip')
       assert.equal(game.commitment, commitment)
@@ -268,7 +268,7 @@ export async function integration(options = {}) {
     console.log('PASS stale zero-mask response retry cannot answer a later letter or alter the transcript')
     cases++
     console.log(`${cases} integration scenarios passed against disposable Anvil.`)
-  } finally { await chain.stop() }
+  } finally { await prover?.destroy(); await chain.stop() }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

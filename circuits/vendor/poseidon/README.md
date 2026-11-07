@@ -1,0 +1,33 @@
+# Poseidon Hashing Library
+
+> [!WARNING]
+> **This library is experimental software. It has not been fully audited and is not guaranteed to be secure. Expect bugs!**
+>
+> poseidon is provided "as is", without warranty of any kind (see [LICENSE](LICENSE)). Bugs in this library can lead to under-constrained circuits, allowing invalid proofs to be accepted. Do not rely on it to protect real assets or sensitive data without your own independent review.
+
+This package contains the Poseidon hashing interface, formerly in the Noir standard library.
+
+## Noir version compatibility
+
+This library is tested to work as of Noir version 1.0.0.
+
+## Benchmarks
+
+Benchmarks are ignored by `git` and checked on pull-request. As such, benchmarks may be generated
+with the following command.
+
+```bash
+# execute the following
+./scripts/build-gates-report.sh
+```
+
+The benchmark will be generated at `./gates_report.json`.
+
+## Installation
+
+In your _Nargo.toml_ file, add the version of this library you would like to install under dependency:
+
+```toml
+[dependencies]
+poseidon = { tag = "v0.1.1", git = "https://github.com/noir-lang/poseidon" }
+```

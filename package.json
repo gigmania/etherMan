@@ -15,14 +15,19 @@
     "test:integration": "node tools/integration.mjs",
     "test:integration:scroll": "npm run contracts:build && node tools/integration.mjs --scroll-fork",
     "test:e2e": "playwright test",
-    "check": "npm run build && npm test && npm run test:contracts && npm run test:integration",
+    "check": "npm run build && npm test && npm run test:contracts && npm run test:proof && npm run test:integration",
     "contracts:build": "node tools/compile.mjs",
     "chain": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337",
     "chain:scroll": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337 --fork-url https://rpc.scroll.io --mnemonic-random",
     "deploy:local": "npm run contracts:build && node tools/deploy-local.mjs",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "proof:build": "node tools/build-dictionary.mjs && node tools/compile-circuit.mjs && node tools/build-prover.mjs",
+    "proof:benchmark": "node tools/benchmark-proof.mjs",
+    "test:proof": "npm run contracts:build && node tools/test-proof.mjs"
   },
   "dependencies": {
+    "@aztec-foundation/bb.js": "6.0.0",
+    "@noir-lang/noir_js": "1.0.0",
     "@tanstack/react-query": "5.106.1",
     "lucide-react": "1.70.0",
     "react": "19.3.1",
@@ -38,6 +43,7 @@
   "devDependencies": {
     "@foundry-rs/anvil": "1.7.1",
     "@foundry-rs/forge": "1.7.1",
+    "@noir-lang/noir_wasm": "1.0.0",
     "@playwright/test": "1.65.0",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
@@ -51,6 +57,7 @@
     "solc": "0.8.38",
     "typescript": "7.0.2",
     "vite": "8.3.6",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "word-list": "4.1.0"
   }
 }

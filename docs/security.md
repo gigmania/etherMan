@@ -6,10 +6,15 @@ The contract holds each open creator stake, each joined two-player pot, and clai
 
 The browser creates the commitment using ABI encoding of chain ID, contract address, creator address, word and a cryptographically random 32-byte salt. The contract exposes the same computation for interoperability. The word and salt must not enter creation calldata, logs, URLs or browser persistent storage. A user-exported recovery file intentionally contains both and must remain private. Browser compromise or sharing the file defeats answer secrecy.
 
-The creator knows the answer and supplies provisional per-letter masks. Settlement checks the committed word and the entire bounded transcript. Guessing cannot reveal information beyond the creator's responses until the final opening. This is an interactive protocol, not a zero-knowledge proof system. It requires participants to monitor deadlines and submit transactions.
+The creator knows the answer and supplies provisional per-letter masks. Settlement checks the committed word and the entire bounded transcript. A zero-knowledge dictionary proof gates creation; it does not validate each response immediately or remove the need for participant interaction. The dictionary root and declared word length are public and narrow the possible vocabulary. The proof keeps the membership path, word, and salt private until the final opening. Participants must still monitor deadlines and submit transactions.
+
+The fixed deployment's verifier, linked libraries, dictionary root, circuit, compiler, proving backend, and proving parameters are additional trust boundaries. The candidate uses Noir 1.0.0 and Barretenberg 6.0.0 with its zero-knowledge EVM target. Backend/CRS provenance and cryptographic assumptions need independent review; a generated verifier and passing tests are not an external audit. Constructor checks only establish that verifier code exists and the root is a nonzero canonical field element. They do not establish that arbitrary supplied code implements the approved proof system.
 
 ## Controls
 
+- Creation requires an 8,768-byte dictionary proof. The contract derives the root, chain, contract, creator, length, and full commitment inputs itself; callers cannot supply a different public-input array. High/low 128-bit limbs preserve full-width values.
+- The verifier/root are immutable and verification uses `STATICCALL`. Failed verification leaves game IDs, escrow, credits, and commitment consumption unchanged. No external word oracle or public membership path is involved.
+- Commitments are consumed permanently only after successful verification. Cancellation and settlement do not permit reuse; a new random salt allows the same word in a later game.
 - Caller authorization is enforced on-chain for joins, guesses, responses, concessions, reveals, cancellations and withdrawals.
 - Game IDs only increase; game terms are immutable. Existing IDs cannot be recycled under pending transactions.
 - Both stakes must match exactly. Per-game escrow only moves into credits once, at a terminal transition.
@@ -21,8 +26,10 @@ The creator knows the answer and supplies provisional per-letter masks. Settleme
 
 ## Known limits and economic assumptions
 
-- There is no dictionary constraint; a creator can choose an obscure or nonsensical valid word. There is no claim of a fair random word distribution.
-- Every action is a transaction. Gas, censorship, network congestion and missed deadlines can affect outcomes. The contract has no autonomous scheduler; someone must claim an elapsed timeout.
+- The fixed vocabulary contains 240,784 ASCII lowercase words of length 3–12 from `word-list@4.1.0` (MIT package, CC0-1.0 Letterpress source). Exact provenance and notices are in `dictionary/`. Obscure/regional words and inflections may be included; membership is not a claim of universal English validity, suitable difficulty, comprehensive moderation, or fair random word distribution.
+- There is no dictionary or verifier administrator. Any vocabulary/circuit/verifier update requires a new deployment and explicit adoption. Existing recovery files remain version 1 because the salted Keccak encoding is unchanged; old games still need access to their original contract.
+- Every action is a transaction. Gas, censorship, network congestion and missed deadlines can affect outcomes. The contract has no autonomous scheduler; someone must claim an elapsed timeout. The current 24-hour turn deadline does not pause during a Scroll sequencer outage. An outage-safe design remains a launch blocker.
+- The complete generated verifier measured approximately 3.84 million gas on local Anvil. This is not the full creation cost, a Scroll fee quote, or proof of Scroll-native compatibility. Browser proving performance, native execution, and complete-game L2/data fees remain release evidence requirements.
 - A salted commitment hides the answer only if the salt is fresh and secret. Reusing a revealed word/salt pair can expose future games.
 - There is no protocol fee or administrator. The original implicit 3% deduction was not retained because it lacked defined ownership/withdrawal rules. Any future fee or privilege requires an explicit design and review.
 - Withdrawal credits have no expiry. Lost account keys cannot be recovered by an administrator. Lost answer recovery material can cause the creator to forfeit.
@@ -32,4 +39,4 @@ The creator knows the answer and supplies provisional per-letter masks. Settleme
 
 ## Evidence and independent review
 
-Unit, fuzz, invariant, real-chain integration and browser tests cover different failure paths. Passing them is not a security certification. The release candidate still requires independent external contract review, a live-deployment inventory, gas measurements and testnet rehearsal before mainnet approval. Review findings and executed checks are recorded in `docs/verification.md` as work completes.
+Unit, fuzz, invariant, real-chain integration and browser tests cover different failure paths. Fast Foundry tests use mock verifiers for game-state and boundary behavior; they do not establish dictionary-proof soundness. Real-proof acceptance/rejection tests must use the exact generated verifier and include tampered public inputs, invalid witnesses, copied proofs, and replay. Passing these checks is not a security certification. The release candidate still requires independent external contract/circuit review, deployment-artifact and proving-parameter provenance, a live-deployment inventory, native Scroll execution and fee measurements, and rehearsal before mainnet approval. Review findings and executed checks are recorded in `docs/verification.md` as work completes.

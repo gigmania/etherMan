@@ -2,6 +2,46 @@
 
 Local candidate on `codex/etherman-modernization`, based on legacy commit `2d3e58cc5356e0a836e25896258f1f4e162b5ad3`. Checks were performed before the modernization commit; no push or public deployment was performed. Checks below ran on November 6, 2026, with Node 26.3.0/npm 12.0.1 on macOS arm64. Recommended development runtime is Node 24.15+ LTS.
 
+## Dictionary-proof implementation — November 7, 2026
+
+Approved local-only work adds actual zero-knowledge dictionary membership at creation.
+Source identity and independent review ledger: [dictionary-review.json](dictionary-review.json).
+Design, package pins, vocabulary provenance and trust assumptions:
+[dictionary-proof.md](dictionary-proof.md).
+
+- TypeScript and production build passed; npm audit reported zero known vulnerabilities.
+- 59 frontend tests and all five Playwright tests passed, including an actual
+  browser proof submitted to the generated Solidity verifier.
+- 37 Foundry tests passed, including 8,192 invariant calls. Mock verifiers in
+  these tests isolate contract boundaries; actual-proof coverage is separate.
+- `npm run test:proof` passed all eight public-input mutation checks, malformed
+  and copied proof checks, atomic failure, commitment replay/new-salt cases,
+  circuit word/padding/path/range failures, and high-chain/word-length boundaries.
+- Eight complete-game integration scenarios passed with actual proofs on local
+  Anvil and a Scroll state fork pinned to block 35,639,573.
+- Chromium production-bundle proof: 74 ms witness, 1,787 ms proving, 10,188 ms
+  total including loading; 8,768-byte proof, no page errors. Node peak process
+  RSS was 408,480 KiB; browser/WASM peak memory and mobile performance unmeasured.
+- Actual game creation used 4,008,996 gas on Anvil. This is not a native Scroll
+  execution result or a complete Scroll fee quote.
+
+Independent security review converged at **B1** on source hash
+`45f14b550eeb0c30011cf798316d2dff247ca09a466e8846e256f0ff2ffb884e`.
+No objective blockers were found. Both reviewers independently reproduced one
+low-severity robustness issue: the reusable deployment helper checks the read
+client, not the separately supplied wallet. All current callers use the same
+loopback transport; defensive wallet validation is deferred before helper reuse.
+See the review ledger for evidence and scope.
+
+After convergence, deployed the reviewed bundle only to the existing loopback
+Anvil chain 31337 at `0x5fc8d32690cc91d4c39d9d3abcbd16989f875707` and updated
+ignored `.env.local`. The prior contract
+`0xe7f1725e7734ce288f8367e1bb143e90bb3f0512` remains untouched. Local UI smoke
+confirmed the new address, word visibility control and zero browser errors.
+
+No public deployment, mainnet signing, timeout redesign, or external audit was
+performed. The older review below applies only to its original candidate.
+
 ## Scroll preparation follow-up — November 6, 2026
 
 After the modernization commit, added `chain:scroll` for local fork rehearsal.

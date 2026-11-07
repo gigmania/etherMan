@@ -6,8 +6,9 @@ The v1 contracts and artifacts are historical source, not part of the v2 build.
 ## Rules and trust assumptions
 
 Two players escrow the same positive ETH stake, at most 1 ETH per player. The
-creator chooses 3–12 lowercase ASCII letters and 1–8 allowed misses. There is no
-dictionary restriction. Guesses are single letters, each used at most once.
+creator chooses a 3–12-letter lowercase ASCII word from the fixed game dictionary
+and 1–8 allowed misses. A private dictionary-membership proof is required when
+creating the game. Guesses are single letters, each used at most once.
 The creator must answer every turn and ultimately reveal the word and its random
 32-byte salt. A successful letter does not count as a miss. There is no protocol
 fee, administrator, upgrade mechanism, or owner withdrawal. The v1 implicit 3%
@@ -18,19 +19,58 @@ salt))`. Use a fresh cryptographically random salt for every game. The word and
 salt must remain off-chain until the reveal transaction; losing them can lose the
 creator's stake. A commitment hides the word only to the extent that the salt is
 unpredictable and kept secret. Do not reuse a salt/commitment. Contract, chain, and
-creator separation prevents a different creator from copying an opening.
+creator separation prevents a different creator from copying an opening. The
+contract permanently rejects reuse of a commitment, including after cancellation
+or settlement. A fresh salt permits another game using the same word. The
+commitment encoding and version-1 recovery-file format remain unchanged.
 
 The creator reports a 16-bit mask for each guess: bit 0 is the first character,
 bit 1 the second, and so on. All occurrences must be included, and zero means a
 miss. Answers are **provisional**. Every recorded answer is replayed against the
-revealed word before the creator can win. Invalid committed words, wrong declared
-lengths, omitted occurrences, and fabricated occurrences award the entire pot to
-the challenger. A wrong word/salt opening reverts and can be retried until expiry.
+revealed word before the creator can win. Omitted or fabricated occurrences award
+the entire pot to the challenger. Canonical-word and declared-length checks remain
+in reveal as defense in depth, although the creation proof already establishes
+those properties for the approved verifier. A wrong word/salt opening reverts and can be retried until expiry.
 
-The scheme provides economic enforcement of truthful responses, not instant
-cryptographic verification or automatic feedback. Both players must monitor their
-turns. Each action requires a transaction and incurs gas. A creator can choose an
-unfamiliar or repeated-letter string; the contract does not certify word quality.
+The dictionary proof validates creation only. Per-letter responses still use
+economic enforcement and final transcript replay rather than immediate proof
+verification or automatic feedback. Both players must monitor their turns. Each
+action requires a transaction and incurs gas. A creator can choose an unfamiliar
+or repeated-letter dictionary word; membership does not certify difficulty or
+provide a fair random word distribution.
+
+## Private dictionary membership
+
+The initial vocabulary contains 240,784 words, normalized from `word-list@4.1.0`
+to unique ASCII lowercase entries of length 3–12, sorted in ASCII order. The
+package carries MIT terms and its Letterpress source carries CC0-1.0 terms;
+source identities, normalization rules, hashes, and notices are retained in
+[`dictionary/`](../dictionary/README.md). Membership means inclusion in this exact
+vocabulary, not a universal judgment of English validity. Regional spellings and
+obscure inflections may appear, and names or newer terms may be absent.
+
+A depth-18 Poseidon2 Merkle tree commits to the vocabulary. The leaf is
+`H(1, length, packedWord96)` and an internal node is `H(2, left, right)`. The packed
+word contains its ASCII bytes followed by zero padding to twelve bytes. Empty
+leaves use `H(1, 0, 0)` and cannot satisfy the circuit's valid-word constraints.
+The generated tree manifest records the exact root and binary layout.
+
+The circuit uses Noir 1.0.0 and Barretenberg 6.0.0 with the zero-knowledge EVM
+verifier target (`evm`, never `evm-no-zk`). It establishes dictionary membership,
+word length/canonical padding, and the unchanged Keccak commitment. The word,
+salt, membership siblings, and path directions are private witness inputs. The
+public inputs, in order, are root, chain ID high/low 128-bit limbs, game-contract
+address, creator address, length, and commitment high/low 128-bit limbs. Full
+256-bit values are split rather than reduced modulo the proof field. No external
+word oracle or public membership path is used.
+
+`EtherMan` fixes the verifier address and dictionary root in its constructor.
+Creation derives all eight public inputs on-chain and verifies the 8,768-byte
+proof through a static call. Rejected, reverting, or malformed verification cannot
+create a game, retain the stake, or consume the commitment. Deployment must use
+the reviewed verifier and root; constructor validation is not a substitute for
+checking artifact identity. There is no administrator or dictionary setter.
+Changing the vocabulary, proof circuit, or verifier requires a new deployment.
 
 ## States and deadlines
 
@@ -54,12 +94,23 @@ An action is permitted at `block.timestamp == deadline`. Expiry is permitted onl
 at `block.timestamp > deadline`. Each turn and reveal request gets a new 24-hour
 deadline. Missing a deadline can forfeit the pot; no automatic transaction executor
 is provided. Permissionless timeout callers never receive funds or a bounty.
+The current contract does not suspend deadlines for sequencer outages or
+censorship. Outage-safe timeout design remains a Scroll mainnet release gate.
 
 ## API
 
-`createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses)` is payable and
-returns a new ID. IDs start at 1 and are never reused. `nextGameId` is the next
+`constructor(address verifier, bytes32 root)` requires deployed verifier code and
+a nonzero root below the BN254 scalar-field modulus. It fixes the two values
+immutably.
+
+`createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses, bytes dictionaryProof)`
+is payable and returns a new ID after proof verification. There is no unverified
+creation overload. IDs start at 1 and are never reused. `nextGameId` is the next
 unused ID. Terms of a created game are immutable.
+
+- `dictionaryVerifier()` and `dictionaryRoot()` expose the immutable proof policy.
+- `usedCommitments(bytes32 commitment)` records permanent consumption.
+- `DICTIONARY_PROOF_BYTES()` is 8,768 for the pinned verifier format.
 
 - `joinGame(uint256 gameId)` payable, exact stake required.
 - `guess(uint256 gameId, uint8 letter)` uses a=0 through z=25.
@@ -102,8 +153,17 @@ forced ETH can make the inequality strict and has no privileged recovery path.
 The Foundry suite uses the pinned Solidity 0.8.38 compiler, Cancun EVM, and optimizer
 with 200 runs. Tests cover authorization, exact deposits, turn deadlines, all
 settlement paths, malformed openings/transcripts, withdrawal failure/reentrancy,
-pooled-fund isolation, fuzzed masks, and stateful accounting invariants. Passing
-tests do not substitute for independent security review and testnet rehearsal.
+pooled-fund isolation, fuzzed masks, and stateful accounting invariants. Fast
+Foundry game-state and verifier-boundary tests use a mock verifier and do not
+establish cryptographic validity. Separate real-proof tests must exercise the
+generated Solidity verifier, including altered public inputs and malformed proofs.
+Passing tests do not substitute for external cryptographic/security review and
+Scroll-native rehearsal.
+
+The complete generated verifier used approximately 3.84 million gas in a local
+Anvil measurement. That excludes the remaining game-creation work and is not a
+Scroll transaction fee or full-game cost. Native execution, proving compatibility,
+L2 execution fees, and Ethereum data fees require separate validation.
 
 Before mainnet: review word/game rules and fee economics, measure gas for the
 complete two-player lifecycle, independently audit contracts and secret handling,

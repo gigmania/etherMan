@@ -1,0 +1,9 @@
+[package]
+name = "etherman_dictionary"
+type = "bin"
+authors = ["EtherMan"]
+compiler_version = "=1.0.0"
+
+[dependencies]
+keccak256 = { path = "../vendor/keccak256" }
+poseidon = { path = "../vendor/poseidon" }

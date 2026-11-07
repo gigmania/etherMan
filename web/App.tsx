@@ -56,10 +56,19 @@ import {
   useClock,
   useCredits,
   useDeployment,
+  useDictionaryRoot,
+  assertDictionaryDeployment,
   useGame,
   useGames,
   useTransaction,
 } from "./chain";
+import {
+  checkDictionaryWord,
+  proveDictionaryWord,
+  DictionaryError,
+  dictionaryErrors,
+  type DictionaryProgress,
+} from "./dictionary";
 
 function Hangman({
   misses = 0,
@@ -688,9 +697,11 @@ function downloadRecovery(recovery: Recovery) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
-  const { address } = useConnection();
+  const { address, chainId } = useConnection();
   const ready = useCanTransact();
   const tx = useTransaction();
+  const dictionary = useDictionaryRoot();
+  const root = dictionary.data;
   const [word, setWord] = useState("");
   const [showWord, setShowWord] = useState(false);
   const [stake, setStake] = useState("0.001");
@@ -699,16 +710,77 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
   const usedCommitments = useRef(new Set<Hex>());
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const preparingRef = useRef(false);
+  const submitting = useRef(false);
+  const [proving, setProving] = useState(false);
+  const [proofPhase, setProofPhase] = useState<DictionaryProgress>("loading");
+  const generation = useRef(0);
+  const controller = useRef<AbortController | undefined>(undefined);
+  const current = useRef({
+    word,
+    address,
+    chainId,
+    root,
+    ready,
+    recovery,
+    saved,
+    stake,
+    misses,
+  });
+  current.current = {
+    word,
+    address,
+    chainId,
+    root,
+    ready,
+    recovery,
+    saved,
+    stake,
+    misses,
+  };
   useEffect(() => {
+    generation.current++;
+    controller.current?.abort();
+    controller.current = undefined;
+    setProving(false);
     setRecovery(undefined);
     setSaved(false);
-  }, [word, address]);
-  const prepare = () => {
+  }, [word, address, chainId, root]);
+  useEffect(
+    () => () => {
+      generation.current++;
+      controller.current?.abort();
+    },
+    [],
+  );
+  const prepare = async () => {
+    if (preparingRef.current || submitting.current || tx.busy) return;
+    preparingRef.current = true;
+    setPreparing(true);
+    const attemptId = generation.current;
+    const snapshot = current.current;
     try {
-      validateWord(word);
-      parseStake(stake);
-      if (!address || !contractAddress)
-        throw new Error("Connect your wallet and a configured contract first.");
+      try {
+        validateWord(word);
+        parseStake(stake);
+      } catch (e) {
+        throw new DictionaryError((e as Error).message);
+      }
+      if (!ready || !address || !contractAddress || !root)
+        throw new DictionaryError(
+          "Connect your wallet to a dictionary-enabled deployment first.",
+        );
+      setError("");
+      await checkDictionaryWord(word, root);
+      if (
+        generation.current !== attemptId ||
+        current.current.word !== snapshot.word ||
+        current.current.address !== snapshot.address ||
+        current.current.chainId !== snapshot.chainId ||
+        !current.current.ready
+      )
+        return;
       const backup = createRecovery(
         targetChain.id,
         contractAddress,
@@ -717,30 +789,83 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
       );
       setRecovery(backup);
       setSaved(false);
-      setError("");
       downloadRecovery(backup);
     } catch (e) {
-      setError((e as Error).message);
+      if (generation.current === attemptId)
+        setError(
+          e instanceof DictionaryError ? e.message : dictionaryErrors.assets,
+        );
+    } finally {
+      preparingRef.current = false;
+      setPreparing(false);
     }
+  };
+  const cancelProof = () => {
+    generation.current++;
+    controller.current?.abort();
+    controller.current = undefined;
+    setProving(false);
+    setError(dictionaryErrors.cancelled);
   };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (submitting.current || preparingRef.current || tx.busy) return;
+    submitting.current = true;
+    const attemptId = generation.current;
+    const snapshot = current.current;
     try {
-      validateWord(word);
-      const value = parseStake(stake);
+      try {
+        validateWord(word);
+        parseStake(stake);
+      } catch (e) {
+        throw new DictionaryError((e as Error).message);
+      }
       if (
+        !ready ||
+        !root ||
         !saved ||
         !recovery ||
         usedCommitments.current.has(recovery.commitment) ||
         !address ||
         !isSameAddress(recovery.creator, address) ||
-        recovery.word !== word
+        recovery.word !== word ||
+        recovery.chainId !== chainId ||
+        !isSameAddress(recovery.contract, contractAddress)
       )
-        throw new Error("Download and confirm your recovery backup first.");
-      setError("");
-      // A timed-out receipt can still mine later. Never submit this secret a
-      // second time; keep its already-downloaded backup available in memory.
+        throw new DictionaryError(
+          "Download and confirm your recovery backup first.",
+        );
       const attempt = recovery;
+      const value = parseStake(stake);
+      const isCurrent = () =>
+        generation.current === attemptId &&
+        current.current.ready &&
+        current.current.address === snapshot.address &&
+        current.current.chainId === snapshot.chainId &&
+        current.current.root === snapshot.root &&
+        current.current.word === snapshot.word &&
+        current.current.recovery === attempt &&
+        current.current.saved &&
+        current.current.stake === snapshot.stake &&
+        current.current.misses === snapshot.misses;
+      setError("");
+      setProving(true);
+      setProofPhase("loading");
+      const abort = new AbortController();
+      controller.current = abort;
+      const result = await proveDictionaryWord(
+        attempt,
+        root,
+        abort.signal,
+        setProofPhase,
+      );
+      if (!isCurrent() || abort.signal.aborted) return;
+      await assertDictionaryDeployment(root);
+      if (!isCurrent() || abort.signal.aborted) return;
+      controller.current = undefined;
+      setProving(false);
+      // A timed-out receipt can still mine later. Consume the commitment only
+      // after proving, synchronously before asking the wallet to submit it.
       usedCommitments.current.add(attempt.commitment);
       setRecovery(undefined);
       setSaved(false);
@@ -748,7 +873,12 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
       const receipt = await tx.run(
         "Create game",
         "createGame",
-        [attempt.commitment, word.length, misses],
+        [
+          attempt.commitment,
+          attempt.word.length,
+          snapshot.misses,
+          result.proof,
+        ],
         value,
       );
       if (receipt) {
@@ -760,11 +890,19 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
         const event = events.find((log) =>
           isSameAddress(log.address, contractAddress),
         );
-        if (event) window.location.hash = `game/${event.args.gameId}`;
-        else window.location.hash = "";
+        window.location.hash = event ? `game/${event.args.gameId}` : "";
       }
     } catch (e) {
-      setError((e as Error).message);
+      if (generation.current === attemptId)
+        setError(
+          e instanceof DictionaryError ? e.message : dictionaryErrors.proof,
+        );
+    } finally {
+      submitting.current = false;
+      if (generation.current === attemptId) {
+        controller.current = undefined;
+        setProving(false);
+      }
     }
   };
   return (
@@ -809,8 +947,8 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
               </button>
             </div>
             <p id="word-hint">
-              3–12 lowercase letters. Only a salted commitment goes on-chain
-              now.
+              3–12 lowercase letters from the game dictionary. Your browser
+              proves membership without revealing the word.
             </p>
           </div>
           <div className="field-row">
@@ -857,16 +995,21 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
               type="button"
               className="button secondary"
               onClick={prepare}
-              disabled={!ready || tx.busy}
+              disabled={!ready || !root || tx.busy || proving || preparing}
             >
               <Download size={16} />
-              {recovery ? "Generate a new backup" : "Download recovery file"}
+              {preparing
+                ? "Checking dictionary…"
+                : recovery
+                  ? "Generate a new backup"
+                  : "Download recovery file"}
             </button>
             {recovery && (
               <label className="checkbox-row">
                 <input
                   type="checkbox"
                   checked={saved}
+                  disabled={proving || tx.busy}
                   onChange={(e) => setSaved(e.target.checked)}
                 />
                 I saved the recovery file somewhere private and can open it
@@ -890,9 +1033,35 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
               {error}
             </p>
           )}
+          {proving && (
+            <div role="status" aria-live="polite">
+              <p>
+                {proofPhase === "loading"
+                  ? "Loading private proof tools…"
+                  : proofPhase === "verifying"
+                    ? "Checking your word proof…"
+                    : "Proving your word privately in this browser…"}
+              </p>
+              <button
+                type="button"
+                className="text-button"
+                onClick={cancelProof}
+              >
+                Cancel proof
+              </button>
+            </div>
+          )}
+          {ready && !root && (
+            <p className="form-hint">
+              This deployment is not ready for dictionary-validated games.
+              Existing games remain accessible.
+            </p>
+          )}
           <button
             className="button full"
-            disabled={!ready || !saved || tx.busy}
+            disabled={
+              !ready || !root || !saved || tx.busy || proving || preparing
+            }
           >
             Lock stake & create game
             <ArrowRight size={18} />
@@ -1596,7 +1765,7 @@ function Rules() {
         [
           "01",
           "Create & keep your secret",
-          "Choose 3–12 lowercase letters and 1–8 allowed misses. The contract stores a salted commitment, not your word. Download your recovery file before creating the game. It contains the word and salt needed to reveal. Keep it private and backed up; losing it can cost your stake.",
+          "Choose a word of 3–12 lowercase letters from the game dictionary and 1–8 allowed misses. Your browser privately proves dictionary membership, and the contract checks that proof before opening the game. Download your recovery file before creating the game. It contains the word and salt needed to reveal. Keep it private and backed up; losing it can cost your stake.",
         ],
         [
           "02",
