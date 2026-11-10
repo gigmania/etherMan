@@ -3,6 +3,7 @@ pragma solidity 0.8.38;
 
 import {DictionaryConfig} from "../contracts-v2/generated/DictionaryConfig.sol";
 import {EtherMan} from "../contracts-v2/EtherMan.sol";
+import {MockSequencerFeed} from "./MockSequencerFeed.sol";
 import {MockDictionaryVerifier} from "./MockDictionaryVerifier.sol";
 
 interface Vm {
@@ -48,7 +49,7 @@ contract EtherManTest {
     EtherMan private game;
 
     function setUp() public {
-        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
+        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)), address(new MockSequencerFeed()));
         vm.deal(CREATOR, 100 ether);
         vm.deal(CHALLENGER, 100 ether);
         vm.deal(OUTSIDER, 100 ether);
@@ -563,7 +564,7 @@ contract EtherManTest {
         bytes32 original = game.computeCommitment(CREATOR, "banana", SALT);
         require(original == keccak256(abi.encode(block.chainid, address(game), CREATOR, "banana", SALT)), "ABI encoding");
         require(original != game.computeCommitment(CHALLENGER, "banana", SALT), "creator domain");
-        EtherMan other = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
+        EtherMan other = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)), address(new MockSequencerFeed()));
         require(original != other.computeCommitment(CREATOR, "banana", SALT), "contract domain");
     }
 
@@ -698,7 +699,7 @@ contract EtherManInvariantTest {
     EtherManHandler private handler;
 
     function setUp() public {
-        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)));
+        game = new EtherMan(address(new MockDictionaryVerifier()), bytes32(uint256(1)), address(new MockSequencerFeed()));
         handler = new EtherManHandler(game);
     }
 

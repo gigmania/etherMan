@@ -15,7 +15,7 @@
     "test:integration": "node tools/integration.mjs",
     "test:integration:scroll": "npm run contracts:build && node tools/integration.mjs --scroll-fork",
     "test:e2e": "playwright test",
-    "check": "npm run build && npm test && npm run test:contracts && npm run test:proof && npm run test:integration",
+    "check": "npm run build && npm test && npm run test:contracts && npm run test:proof && npm run test:integration && npm run test:outage",
     "contracts:build": "node tools/compile.mjs",
     "chain": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337",
     "chain:scroll": "node tools/foundry.mjs anvil --host 127.0.0.1 --chain-id 31337 --fork-url https://rpc.scroll.io --mnemonic-random",
@@ -23,7 +23,9 @@
     "preview": "vite preview --host 127.0.0.1",
     "proof:build": "node tools/build-dictionary.mjs && node tools/compile-circuit.mjs && node tools/build-prover.mjs",
     "proof:benchmark": "node tools/benchmark-proof.mjs",
-    "test:proof": "npm run contracts:build && node tools/test-proof.mjs"
+    "test:proof": "npm run contracts:build && node tools/test-proof.mjs",
+    "test:outage": "npm run contracts:build && node tools/test-outage.mjs",
+    "test:outage:scroll": "npm run contracts:build && node tools/test-outage.mjs --scroll-fork"
   },
   "dependencies": {
     "@aztec-foundation/bb.js": "6.0.0",

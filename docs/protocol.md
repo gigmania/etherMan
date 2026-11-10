@@ -90,18 +90,25 @@ after challenger inactivity, prior responses must pass replay validation. With a
 honest transcript, all positions shown awards the challenger; any other completed
 reason awards the creator. Creator response/reveal timeouts award the challenger.
 
-An action is permitted at `block.timestamp == deadline`. Expiry is permitted only
-at `block.timestamp > deadline`. Each turn and reveal request gets a new 24-hour
+An action is permitted at `block.timestamp == effectiveDeadline`. Expiry is
+permitted only at `block.timestamp > effectiveDeadline`. Each turn and reveal request gets a new 24-hour
 deadline. Missing a deadline can forfeit the pot; no automatic transaction executor
 is provided. Permissionless timeout callers never receive funds or a bounty.
-The current contract does not suspend deadlines for sequencer outages or
-censorship. Outage-safe timeout design remains a Scroll mainnet release gate.
+For active states 1–3, the effective deadline is the later of the stored turn
+end and global recovery grace. The fixed uptime feed must be healthy. A new
+healthy round requires permissionless synchronization before active timeout
+claims; synchronization starts 24 hours of grace from local observation. Ordinary
+player actions can synchronize automatically and remain available during grace.
+Same-round heartbeats never extend it. All unsettled active games receive grace,
+even if a prior deadline passed without settlement. Open expiry/refunds and
+withdrawals remain independent of the feed. See [outage rules and external trust
+limits](outage-handling.md); unreported outages and censorship are not covered.
 
 ## API
 
-`constructor(address verifier, bytes32 root)` requires deployed verifier code and
-a nonzero root below the BN254 scalar-field modulus. It fixes the two values
-immutably.
+`constructor(address verifier, bytes32 root, address uptimeFeed)` requires deployed
+verifier code, a nonzero root below the BN254 scalar-field modulus, and a valid
+healthy initial uptime round. All three configuration values are immutable.
 
 `createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses, bytes dictionaryProof)`
 is payable and returns a new ID after proof verification. There is no unverified
@@ -109,6 +116,10 @@ creation overload. IDs start at 1 and are never reused. `nextGameId` is the next
 unused ID. Terms of a created game are immutable.
 
 - `dictionaryVerifier()` and `dictionaryRoot()` expose the immutable proof policy.
+- `sequencerUptimeFeed()`, `observedRoundId()`, and `recoveryUntil()` expose the outage configuration/checkpoint.
+- `getNetworkStatus()` returns Unavailable (0), Down (1), RecoveryPending (2), or Ready (3), with the observed feed round and stored grace deadline. Ready includes ongoing grace.
+- `syncSequencer()` records a new healthy round and starts grace once.
+- `getGame().deadline` remains the raw deadline; clients must apply the active-game recovery maximum and health gates.
 - `usedCommitments(bytes32 commitment)` records permanent consumption.
 - `DICTIONARY_PROOF_BYTES()` is 8,768 for the pinned verifier format.
 

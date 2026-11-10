@@ -48,6 +48,8 @@ vi.mock("wagmi", () => ({
 import {
   TransactionProvider,
   assertDictionaryDeployment,
+  assertNetworkReady,
+  useNetworkStatus,
   useDeployment,
   useGame,
   useTransaction,
@@ -296,4 +298,163 @@ describe("dictionary deployment binding", () => {
     mocks.publicClient.getChainId.mockResolvedValue(1);
     await expect(assertDictionaryDeployment(root)).rejects.toThrow("not ready");
   });
+});
+
+describe("fail-closed network health", () => {
+  function Health() {
+    const health = useNetworkStatus();
+    return (
+      <>
+        <output data-testid="health">{health.data.status}</output>
+        <button onClick={() => health.refetch()}>Refresh health</button>
+      </>
+    );
+  }
+  function mountHealth() {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <Health />
+      </QueryClientProvider>,
+    );
+  }
+  it("starts unverified and clears cached Ready on a failed RPC refresh", async () => {
+    mocks.publicClient.readContract.mockImplementation(
+      async ({ functionName }) =>
+        functionName === "getNetworkStatus" ? [3, 1n, 100n] : 1n,
+    );
+    mountHealth();
+    expect(screen.getByTestId("health").textContent).toBe("-1");
+    await waitFor(() =>
+      expect(screen.getByTestId("health").textContent).toBe("3"),
+    );
+    mocks.publicClient.readContract.mockRejectedValue(
+      new Error("RPC read failed"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Refresh health" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("health").textContent).toBe("-1"),
+    );
+  });
+  it.each(["malformed", "wrong network"])(
+    "turns a cached Ready observation into unknown after %s",
+    async (failure) => {
+      mocks.publicClient.readContract.mockImplementation(
+        async ({ functionName }) =>
+          functionName === "getNetworkStatus" ? [3, 1n, 100n] : 1n,
+      );
+      mountHealth();
+      await waitFor(() =>
+        expect(screen.getByTestId("health").textContent).toBe("3"),
+      );
+      if (failure === "malformed")
+        mocks.publicClient.readContract.mockResolvedValue([
+          3,
+          "bad-round",
+          100n,
+        ]);
+      else mocks.publicClient.getChainId.mockResolvedValue(1);
+      fireEvent.click(screen.getByRole("button", { name: "Refresh health" }));
+      await waitFor(() =>
+        expect(screen.getByTestId("health").textContent).toBe("-1"),
+      );
+    },
+  );
+  it.each([0, 1, 2, 3])(
+    "reads explicit status %s without assuming readiness",
+    async (status) => {
+      mocks.publicClient.readContract.mockImplementation(
+        async ({ functionName }) =>
+          functionName === "getNetworkStatus" ? [status, 1n, 100n] : 1n,
+      );
+      mountHealth();
+      await waitFor(() =>
+        expect(mocks.publicClient.readContract).toHaveBeenCalledWith(
+          expect.objectContaining({ functionName: "getNetworkStatus" }),
+        ),
+      );
+      await waitFor(() =>
+        expect(screen.getByTestId("health").textContent).toBe(String(status)),
+      );
+    },
+  );
+  it.each([[4, 1n, 0n], [3, "1", 0n], null])(
+    "treats malformed health data %j as unverified",
+    async (result) => {
+      mocks.publicClient.readContract.mockResolvedValue(result);
+      await expect(assertNetworkReady()).rejects.toThrow(
+        "Network health is unverified",
+      );
+    },
+  );
+  it.each([
+    [0, "Network health is unavailable"],
+    [1, "network sequencer is down"],
+    [2, "24-hour recovery grace period"],
+  ])("blocks fresh creation checks for status %s", async (status, message) => {
+    mocks.publicClient.readContract.mockResolvedValue([status, 1n, 100n]);
+    await expect(assertNetworkReady()).rejects.toThrow(message as string);
+  });
+  it.each(["RPC failure", "malformed", "wrong network"])(
+    "does not promise paused deadlines after a fresh %s",
+    async (failure) => {
+      mocks.publicClient.readContract.mockResolvedValue([3, 1n, 100n]);
+      if (failure === "RPC failure")
+        mocks.publicClient.readContract.mockRejectedValue(
+          new Error("secret-word private-salt"),
+        );
+      if (failure === "malformed")
+        mocks.publicClient.readContract.mockResolvedValue([
+          3,
+          "bad-round",
+          100n,
+        ]);
+      if (failure === "wrong network")
+        mocks.publicClient.getChainId.mockResolvedValue(1);
+      const error = await assertNetworkReady().catch((error) => error);
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain("health is unverified");
+      expect(error.message).toContain("deadlines may continue");
+      expect(error.message).not.toMatch(
+        /paused|remain escrowed|secret-word|private-salt/,
+      );
+    },
+  );
+  it("accepts Ready during recovery grace and sanitizes unavailable RPC errors", async () => {
+    mocks.publicClient.readContract.mockResolvedValue([3, 1n, 9999999999n]);
+    await expect(assertNetworkReady()).resolves.toBeUndefined();
+    mocks.publicClient.readContract.mockRejectedValue(
+      new Error("privateword secret-salt"),
+    );
+    await expect(assertNetworkReady()).rejects.toThrow(
+      "Network health is unverified",
+    );
+  });
+});
+
+describe("safe network transaction errors", () => {
+  it.each([
+    ["SequencerUnavailable", "Network health is unavailable"],
+    ["SequencerDown", "network sequencer is down"],
+    ["RecoverySyncRequired", "24-hour recovery grace period"],
+  ])(
+    "shows authored guidance for %s without decoded arguments",
+    async (errorName, message) => {
+      mocks.publicClient.simulateContract.mockRejectedValue(
+        Object.assign(new Error("privateword secret-salt"), {
+          cause: { data: { errorName, args: ["privateword", "secret-salt"] } },
+        }),
+      );
+      const { complete } = mount();
+      await submit();
+      await waitFor(() => expect(complete).toHaveBeenCalledWith(undefined));
+      const rendered = screen.getByTestId("message").textContent;
+      expect(rendered).toContain(message);
+      expect(rendered).not.toContain("privateword");
+      expect(rendered).not.toContain("secret-salt");
+      expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    },
+  );
 });

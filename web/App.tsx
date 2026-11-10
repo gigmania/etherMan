@@ -38,6 +38,8 @@ import {
   createRecovery,
   eth,
   gameActions,
+  gameTimeLeft,
+  unverifiedHealthMessage,
   isSameAddress,
   maskFor,
   parseRecovery,
@@ -57,6 +59,9 @@ import {
   useCredits,
   useDeployment,
   useDictionaryRoot,
+  useNetworkStatus,
+  assertNetworkReady,
+  NetworkHealthError,
   assertDictionaryDeployment,
   useGame,
   useGames,
@@ -340,6 +345,63 @@ function useCanTransact() {
     !setupIssue
   );
 }
+export function NetworkNotice() {
+  const network = useNetworkStatus();
+  const ready = useCanTransact();
+  const tx = useTransaction();
+  const now = useClock();
+  const { status, recoveryUntil } = network.data;
+  if (status === 3 && recoveryUntil < BigInt(now)) return null;
+  return (
+    <aside className="connection-note network-health" role="status">
+      <Clock3 size={18} />
+      <div>
+        <strong>
+          {status === 3
+            ? "Recovery grace period"
+            : status === 2
+              ? "Network recovery detected"
+              : status === 1
+                ? "Network sequencer is down"
+                : status === 0
+                  ? "Network health unavailable"
+                  : "Network health unverified"}
+          .
+        </strong>
+        <p>
+          {status === 3
+            ? `Play is available. Recovery grace: ${timeLeft(recoveryUntil, now)}. Every unsettled active game, including an expired but unclaimed game, has until at least this time to act. Longer turn deadlines stay in place.`
+            : status === -1
+              ? unverifiedHealthMessage
+              : "Active game actions and timeout forfeitures are paused. Stakes remain escrowed. Withdrawals, creator cancellations, and expired open-game refunds remain available when transactions can be processed."}
+        </p>
+        {status === 2 && (
+          <>
+            <p>
+              Any wallet can record recovery to start the 24-hour grace period;
+              no administrator is needed. Routine updates in the same recovery
+              round do not restart it.
+            </p>
+            <button
+              className="button secondary small"
+              disabled={!ready || tx.busy}
+              onClick={() =>
+                tx.run("Start recovery grace period", "syncSequencer", [])
+              }
+            >
+              Start recovery grace period
+            </button>
+            {!ready && (
+              <p>
+                Connect a wallet on the configured network to start recovery.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </aside>
+  );
+}
 function StatusPill({ game }: { game: Game }) {
   const labels = [
     "Waiting for player",
@@ -425,6 +487,7 @@ function Lobby() {
   const games = useGames(page);
   const { address } = useConnection();
   const now = useClock();
+  const network = useNetworkStatus().data;
   const [search, setSearch] = useState("");
   const filtered =
     games.data?.games.filter(
@@ -609,7 +672,9 @@ function Lobby() {
                   <span>{game.wordLength} letters</span>
                   <span>{game.maxMisses} misses</span>
                   <span>
-                    {game.state < 4 ? timeLeft(game.deadline, now) : "Complete"}
+                    {game.state < 4
+                      ? gameTimeLeft(game, now, network)
+                      : "Complete"}
                   </span>
                 </div>
                 <div className="game-card-bottom">
@@ -698,7 +763,9 @@ function downloadRecovery(recovery: Recovery) {
 }
 export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
   const { address, chainId } = useConnection();
-  const ready = useCanTransact();
+  const walletReady = useCanTransact();
+  const network = useNetworkStatus().data;
+  const ready = walletReady && network.status === 3;
   const tx = useTransaction();
   const dictionary = useDictionaryRoot();
   const root = dictionary.data;
@@ -747,6 +814,13 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
     setRecovery(undefined);
     setSaved(false);
   }, [word, address, chainId, root]);
+  useEffect(() => {
+    if (network.status === 3) return;
+    generation.current++;
+    controller.current?.abort();
+    controller.current = undefined;
+    setProving(false);
+  }, [network.status]);
   useEffect(
     () => () => {
       generation.current++;
@@ -849,6 +923,8 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
         current.current.stake === snapshot.stake &&
         current.current.misses === snapshot.misses;
       setError("");
+      await assertNetworkReady();
+      if (!isCurrent()) return;
       setProving(true);
       setProofPhase("loading");
       const abort = new AbortController();
@@ -861,6 +937,7 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
       );
       if (!isCurrent() || abort.signal.aborted) return;
       await assertDictionaryDeployment(root);
+      await assertNetworkReady();
       if (!isCurrent() || abort.signal.aborted) return;
       controller.current = undefined;
       setProving(false);
@@ -895,7 +972,9 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
     } catch (e) {
       if (generation.current === attemptId)
         setError(
-          e instanceof DictionaryError ? e.message : dictionaryErrors.proof,
+          e instanceof DictionaryError || e instanceof NetworkHealthError
+            ? e.message
+            : dictionaryErrors.proof,
         );
     } finally {
       submitting.current = false;
@@ -1067,9 +1146,15 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
             Lock stake & create game
             <ArrowRight size={18} />
           </button>
-          {!ready && (
+          {!walletReady && (
             <p className="form-hint">
               A connected wallet on the configured test network is required.
+            </p>
+          )}
+          {walletReady && network.status !== 3 && (
+            <p className="form-hint">
+              Creation is paused until network health is ready. Your recovery
+              backup remains private.
             </p>
           )}
         </form>
@@ -1201,6 +1286,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
   const ready = useCanTransact();
   const tx = useTransaction();
   const now = useClock();
+  const network = useNetworkStatus().data;
   const [word, setWord] = useState("");
   const [salt, setSalt] = useState("");
   const [error, setError] = useState("");
@@ -1245,7 +1331,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
     guesses: [letters, masks],
   } = query.data;
   const role = roleOf(game, address);
-  const actions = gameActions(game, address, now);
+  const actions = gameActions(game, address, now, network);
   const tiles = game.finalWord
     ? [...game.finalWord]
     : visibleWord(game.wordLength, letters, masks);
@@ -1269,6 +1355,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
     event.target.value = "";
   };
   const reveal = async () => {
+    if (!ready || !actions.reveal) return;
     try {
       validateWord(word);
       if (!/^0x[0-9a-fA-F]{64}$/.test(salt))
@@ -1294,6 +1381,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
     }
   };
   const response = () => {
+    if (!ready || !actions.respond) return;
     try {
       let mask = selectedMask;
       if (word) {
@@ -1392,7 +1480,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
             {game.state < 4 && (
               <div>
                 <dt>Deadline</dt>
-                <dd>{timeLeft(game.deadline, now)}</dd>
+                <dd>{gameTimeLeft(game, now, network)}</dd>
               </div>
             )}
           </dl>
@@ -1785,7 +1873,7 @@ function Rules() {
         [
           "05",
           "Resolve a missed deadline",
-          "A creator who misses a response or reveal deadline loses the pot to the challenger when someone calls the timeout action. A challenger timeout first requests a reveal: the creator must still demonstrate honest responses. Deadlines do not execute automatically; someone must submit the transaction and pay gas.",
+          "A creator who misses a response or reveal deadline loses the pot to the challenger when someone calls the timeout action. A challenger timeout first requests a reveal: the creator must still demonstrate honest responses. Active-game timeouts pause when the contract reports an unavailable feed or a sequencer outage. An RPC failure alone provides no such protection. After recovery, any wallet can start a 24-hour grace period covering every unsettled active game, including expired but unclaimed turns. Longer deadlines stay in place; open-game expiry remains seven days. Deadlines do not execute automatically; someone must submit the transaction and pay gas.",
         ],
         [
           "06",
@@ -1875,6 +1963,7 @@ function Shell() {
       </header>
       <main className="main-container">
         <ConnectionNotice />
+        <NetworkNotice />
         <Credits />
         {route === "create" ? (
           <CreateGame

@@ -20,8 +20,9 @@ compiler output and implemented dictionary verifier there.
 The read-only verifier and complete-game fee assessment is recorded in
 [`scroll-assessment.md`](scroll-assessment.md); it does not establish transaction
 inclusion or rollup finalization. Before launch, validate live complete-game fees, distinguish
-L2 inclusion from L1 finality in the UI, and resolve outage handling for 24-hour
-turns. Dictionary enforcement is implemented in the local candidate, but is not
+L2 inclusion from L1 finality in the UI, and accept the reported-outage recovery policy and its external feed/delivery
+limits. The candidate implements permissionless 24-hour recovery grace; see
+[outage handling](outage-handling.md). Dictionary enforcement is implemented in the local candidate, but is not
 publicly deployed or externally audited. The fixed 274,137-word vocabulary comes
 from `word-list@4.1.0` with MIT/CC0-1.0 provenance retained in `dictionary/`.
 The constructor fixes the root and verifier; neither can be updated by an admin.
@@ -42,7 +43,7 @@ Record browser time/memory and actual Scroll execution/data fees before launch.
 
 ## Before mainnet
 
-1. Resolve all accepted release-blocking findings, including outage-safe 24-hour turns, and obtain independent external contract/circuit security review. Confirm the generated verifier, linked libraries, root, and browser proving assets match the reviewed artifacts.
+1. Resolve all accepted release-blocking findings, including acceptance of uptime-feed trust, delivery-gap and indefinite active-escrow risks, and obtain independent external contract/circuit security review. Confirm the generated verifier, linked libraries, root, official uptime proxy, initial feed round, and browser proving assets match the reviewed artifacts. Never use the chain-31337-only LocalSequencerFeed fixture in a public release.
 2. Rehearse complete games, real-proof acceptance/rejection, invalid words and altered inputs, copied proofs and replay, worker cancellation/stale results, rejection/revert recovery, account/network changes, lost recovery material, dishonest responses, elapsed deadlines and smart-contract-wallet withdrawals in a maintained Scroll-native rehearsal environment.
 3. Validate Scroll complete-game fees, including L2 execution and Ethereum data fees, against the product budget. Any different chain or off-chain protocol is a new explicit deployment/design decision.
 4. Establish monitoring for escrow/credit accounting, failed transactions, unclaimed credits, overdue games, RPC availability and frontend artifact integrity. Assign an operational owner and a user-support process.

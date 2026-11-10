@@ -66,7 +66,7 @@ sequencer, finality, opcode differences, or complete L1 data fees. Native Scroll
 execution and fee validation remain release gates. The private dictionary-membership proof is implemented and tested locally.
 Outage-safe timeout design remains outstanding.
 
-Run the eight gameplay integration scenarios against a disposable Scroll state
+Run the twelve gameplay integration scenarios against a disposable Scroll state
 fork with `npm run test:integration:scroll`. The command rebuilds the contract,
 checks the upstream chain ID, prints and pins the upstream block, uses a separate
 loopback port, and stops its fork when finished. It needs network access for
@@ -77,6 +77,7 @@ read-only RPC requests; the ordinary `test:integration` command stays local.
 - The creator selects a dictionary word in lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. The word must belong to the fixed 274,137-word game dictionary. A private proof is verified before a game can be created.
 - The creator downloads a private recovery file before creating the game. It contains the answer and a random salt: keep it private and keep it until settlement. Losing it can forfeit the stake.
 - The challenger matches the exact stake. Each guess and response gets a 24-hour deadline. The creator must actively respond with **every** matching letter position.
+- Reported sequencer recovery starts a 24-hour grace period when recorded on-chain. Anyone can synchronize recovery; ordinary play is allowed during grace. Active timeout losses are blocked while the feed is down, unavailable, or awaiting synchronization. Open refunds and withdrawals remain available. See [outage rules and limitations](docs/outage-handling.md).
 - Responses are provisional. After completion, concession, or challenger inactivity, the creator reveals the answer and salt. The contract verifies the commitment and every prior response before awarding funds.
 - A dishonest transcript or a missed creator response/reveal deadline awards the pot to the challenger. Challenger inactivity first requires a creator reveal; it does not bypass honesty checks.
 - Unjoined games can be cancelled by their creator; anyone can expire them after seven days. Funds become withdrawal credits. Claiming a deadline and withdrawing each require a transaction.
@@ -90,6 +91,8 @@ Full transition rules and interfaces: [protocol](docs/protocol.md). Threat model
 
 ```sh
 npm run proof:build        # reproduce dictionary tree, circuit, verifier, and browser assets
+npm run test:outage        # real-proof outage, recovery, settlement and withdrawal flows
+npm run test:outage:scroll # local fork plus actual official Scroll uptime proxy
 npm run test:proof         # actual ZK proofs, Solidity verifier, altered-input and replay tests
 npm run build              # solc 0.8.38, generated ABI, TypeScript, production frontend
 npm test                   # frontend rules, values, secrets and interaction tests

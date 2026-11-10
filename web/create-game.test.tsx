@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   checkWord: vi.fn(),
   proveWord: vi.fn(),
   assertDictionary: vi.fn(),
+  assertNetwork: vi.fn(),
+  network: { status: 3, roundId: 1n, recoveryUntil: 0n },
   chainId: 31337,
   root: "0x" + "12".repeat(32),
   useGame: vi.fn(),
@@ -42,6 +44,9 @@ vi.mock("./chain", () => ({
   useDeployment: () => ({ data: true }),
   useDictionaryRoot: () => ({ data: mocks.root }),
   assertDictionaryDeployment: mocks.assertDictionary,
+  assertNetworkReady: mocks.assertNetwork,
+  NetworkHealthError: class NetworkHealthError extends Error {},
+  useNetworkStatus: () => ({ data: mocks.network }),
   useClock: () => 90,
   useCredits: mocks.useCredits,
   useGame: mocks.useGame,
@@ -58,12 +63,14 @@ vi.mock("./dictionary", () => ({
     cancelled: "Proof generation cancelled. No transaction was submitted.",
   },
 }));
-import { CreateGame, Credits, GameView } from "./App";
+import { CreateGame, Credits, GameView, NetworkNotice } from "./App";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.account = "0x1111111111111111111111111111111111111111";
   mocks.chainId = 31337;
+  mocks.network = { status: 3, roundId: 1n, recoveryUntil: 0n };
+  mocks.assertNetwork.mockReset().mockResolvedValue(undefined);
   mocks.checkWord.mockReset().mockResolvedValue(undefined);
   mocks.proveWord
     .mockReset()
@@ -435,6 +442,235 @@ it("does not start concurrent proofs on repeated submits", async () => {
   const submit = await prepareCreation();
   fireEvent.submit(submit.closest("form")!);
   fireEvent.submit(submit.closest("form")!);
-  expect(mocks.proveWord).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(mocks.proveWord).toHaveBeenCalledTimes(1));
   expect(mocks.run).not.toHaveBeenCalled();
 });
+
+it.each([-1, 0, 1, 2])(
+  "blocks creation before proof when network status is %s",
+  (status) => {
+    mocks.network.status = status;
+    render(<CreateGame remember={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/Your secret word/), {
+      target: { value: "ether" },
+    });
+    const submit = screen.getByRole("button", {
+      name: /Lock stake & create game/,
+    }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    fireEvent.submit(submit.closest("form")!);
+    expect(mocks.proveWord).not.toHaveBeenCalled();
+    expect(mocks.run).not.toHaveBeenCalled();
+  },
+);
+
+it("checks fresh health before proving and again before consuming a recovery", async () => {
+  const { NetworkHealthError } = await import("./chain");
+  const remember = vi.fn();
+  mocks.assertNetwork.mockRejectedValueOnce(
+    new NetworkHealthError(
+      "Network health is unverified. Deadlines may continue.",
+    ),
+  );
+  render(<CreateGame remember={remember} />);
+  const submit = await prepareCreation();
+  fireEvent.click(submit);
+  await screen.findByText(
+    "Network health is unverified. Deadlines may continue.",
+  );
+  expect(mocks.proveWord).not.toHaveBeenCalled();
+  expect(remember).not.toHaveBeenCalled();
+  mocks.assertNetwork
+    .mockResolvedValueOnce(undefined)
+    .mockRejectedValueOnce(
+      new NetworkHealthError("The network sequencer is down."),
+    );
+  fireEvent.click(submit);
+  await screen.findByText("The network sequencer is down.");
+  expect(mocks.proveWord).toHaveBeenCalledOnce();
+  expect(mocks.run).not.toHaveBeenCalled();
+  expect(remember).not.toHaveBeenCalled();
+  expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
+});
+
+it("aborts an in-flight proof when network health becomes unavailable", async () => {
+  let resolveProof: (value: unknown) => void = () => {};
+  mocks.proveWord.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveProof = resolve;
+      }),
+  );
+  const remember = vi.fn();
+  const view = render(<CreateGame remember={remember} />);
+  fireEvent.click(await prepareCreation());
+  await waitFor(() => expect(mocks.proveWord).toHaveBeenCalledOnce());
+  mocks.network = { ...mocks.network, status: 0 };
+  view.rerender(<CreateGame remember={remember} />);
+  expect((mocks.proveWord.mock.calls[0][2] as AbortSignal).aborted).toBe(true);
+  resolveProof({ proof: "0xabcd" });
+  await waitFor(() =>
+    expect(screen.queryByText(/Proving your word/)).toBeNull(),
+  );
+  expect(mocks.run).not.toHaveBeenCalled();
+  expect(remember).not.toHaveBeenCalled();
+});
+
+it("lets any connected wallet start recovery explicitly, without a background transaction", () => {
+  mocks.network.status = 2;
+  render(<NetworkNotice />);
+  expect(screen.getByRole("status").textContent).toContain(
+    "no administrator is needed",
+  );
+  expect(mocks.run).not.toHaveBeenCalled();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Start recovery grace period" }),
+  );
+  expect(mocks.run).toHaveBeenCalledWith(
+    "Start recovery grace period",
+    "syncSequencer",
+    [],
+  );
+});
+
+it("shows the recovery deadline and removes the notice after grace ends", () => {
+  mocks.network.recoveryUntil = 91n;
+  const view = render(<NetworkNotice />);
+  expect(screen.getByRole("status").textContent).toContain("1s left");
+  expect(screen.getByRole("status").textContent).toContain(
+    "expired but unclaimed",
+  );
+  mocks.network.recoveryUntil = 89n;
+  view.rerender(<NetworkNotice />);
+  expect(screen.queryByRole("status")).toBeNull();
+});
+
+it.each([0, 1, 2])(
+  "keeps withdrawals, cancellation and expired-open refunds available during status %s",
+  (status) => {
+    mocks.network.status = status;
+    const game: Game = {
+      creator: mocks.account as Address,
+      challenger: "0x3333333333333333333333333333333333333333",
+      commitment: `0x${"01".repeat(32)}`,
+      stake: 1n,
+      deadline: 89n,
+      wordLength: 5,
+      maxMisses: 6,
+      misses: 0,
+      guessedLetters: 0,
+      revealedMask: 0,
+      pendingLetter: 26,
+      state: 0,
+      winner: "0x0000000000000000000000000000000000000000",
+      finalWord: "",
+    };
+    mocks.useGame.mockReturnValue({
+      data: { game, guesses: [[], []] },
+      refetch: vi.fn(),
+    });
+    const view = render(
+      <>
+        <Credits />
+        <GameView id={7n} />
+      </>,
+    );
+    for (const name of [
+      /Withdraw ETH/,
+      /Cancel & credit refund/,
+      /Refund expired game/,
+    ])
+      expect(
+        (screen.getByRole("button", { name }) as HTMLButtonElement).disabled,
+      ).toBe(false);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Refund expired game/ }),
+    );
+    expect(mocks.run).toHaveBeenCalledWith(
+      "Resolve expired turn",
+      "claimTimeout",
+      [7n],
+    );
+    mocks.useGame.mockReturnValue({
+      data: { game: { ...game, state: 2 }, guesses: [[], []] },
+      refetch: vi.fn(),
+    });
+    view.rerender(
+      <>
+        <Credits />
+        <GameView id={7n} />
+      </>,
+    );
+    expect(screen.queryByRole("button", { name: /Claim timeout/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Submit letter positions/ }),
+    ).toBeNull();
+    expect(screen.getByText("Timeouts paused")).toBeTruthy();
+  },
+);
+
+it("shows the effective deadline and permits play during recovery grace", () => {
+  mocks.network.recoveryUntil = 92n;
+  const game: Game = {
+    creator: "0x3333333333333333333333333333333333333333",
+    challenger: mocks.account as Address,
+    commitment: `0x${"01".repeat(32)}`,
+    stake: 1n,
+    deadline: 89n,
+    wordLength: 5,
+    maxMisses: 6,
+    misses: 0,
+    guessedLetters: 0,
+    revealedMask: 0,
+    pendingLetter: 26,
+    state: 1,
+    winner: "0x0000000000000000000000000000000000000000",
+    finalWord: "",
+  };
+  mocks.useGame.mockReturnValue({
+    data: { game, guesses: [[], []] },
+    refetch: vi.fn(),
+  });
+  const view = render(<GameView id={7n} />);
+  expect(screen.getByText("2s left")).toBeTruthy();
+  expect(
+    (
+      screen.getByRole("button", {
+        name: "a",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(false);
+  expect(
+    screen.queryByRole("button", { name: /Request final reveal/ }),
+  ).toBeNull();
+  mocks.useGame.mockReturnValue({
+    data: { game: { ...game, deadline: 95n }, guesses: [[], []] },
+    refetch: vi.fn(),
+  });
+  view.rerender(<GameView id={7n} />);
+  expect(screen.getByText("5s left")).toBeTruthy();
+});
+
+it("warns that deadlines may continue when health cannot be verified", () => {
+  mocks.network.status = -1;
+  render(<NetworkNotice />);
+  const notice = screen.getByRole("status").textContent!;
+  expect(notice).toContain("Network health unverified");
+  expect(notice).toContain("deadlines may continue");
+  expect(notice).not.toMatch(/paused|remain escrowed/);
+  expect(
+    screen.queryByRole("button", { name: "Start recovery grace period" }),
+  ).toBeNull();
+  expect(mocks.run).not.toHaveBeenCalled();
+});
+
+it.each([0, 1, 2])(
+  "shows timeout protection only for contract-confirmed status %s",
+  (status) => {
+    mocks.network.status = status;
+    render(<NetworkNotice />);
+    const notice = screen.getByRole("status").textContent!;
+    expect(notice).toContain("timeout forfeitures are paused");
+    expect(notice).not.toContain("unverified");
+  },
+);

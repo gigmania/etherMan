@@ -2,6 +2,59 @@
 
 Local candidate on `codex/etherman-modernization`, based on legacy commit `2d3e58cc5356e0a836e25896258f1f4e162b5ad3`. Checks were performed before the modernization commit; no push or public deployment was performed. Checks below ran on November 6, 2026, with Node 26.3.0/npm 12.0.1 on macOS arm64. Recommended development runtime is Node 24.15+ LTS.
 
+## Reported-outage recovery candidate — November 10, 2026
+
+Work began from committed/pushed `fa4b339` on `codex/etherman-modernization`,
+following approval of the outage-handling plan. The candidate fixes an uptime
+proxy at construction and provides permissionless 24-hour recovery grace from
+first observation of a new healthy round. Detailed rules, source evidence,
+external trust and indefinite active-escrow limits: [outage handling](outage-handling.md).
+
+- 115 frontend tests and TypeScript pass after review remediation. Contract tests: 59 passed, including
+  18 outage cases, 256 recovery-delay fuzz runs and 8,192 accounting invariant calls.
+- Solidity/Vite production build passes; EtherMan runtime is 10,180 bytes.
+- Real proof acceptance/rejection and replay tests pass. Actual proof-backed
+  creation measured 4,024,248 gas locally. Dictionary/circuit/proof assets and
+  recovery encoding are unchanged from the reviewed dictionary-v2 version.
+- All 12 existing local integration scenarios pass. Three additional real-proof
+  outage scenarios pass locally and on the Scroll state fork at block 35,675,217:
+  prolonged outage with safe open refund/withdrawal; recovery synchronization,
+  heartbeat stability, legitimate response during grace and reveal/withdrawal;
+  unseen down/up recovery, automatic player-action synchronization and eventual
+  forfeiture only after a full renewed opportunity.
+- An additional locally deployed candidate bound to the actual official Scroll
+  uptime proxy returned Ready at round 18446744073709552042. This validates a
+  contract caller on the fork, not a public deployment or live outage guarantee.
+- All five browser scenarios pass in 46.5 seconds, including a client-only RPC
+  health-read failure while an independent client sees Ready, restoration of
+  reads, actual simulated down/up status, permissionless synchronization, play
+  during grace, reveal and withdrawal. The 28-letter private-proof creation
+  scenario also passes. Initial fixture failures were a punctuation assertion
+  and timestamp-dependent exact-gas estimation; a bounded 200,000-gas test-only
+  limit resolved the latter (31,680 exact gas reverted; 37,188 was needed).
+- A1 and B1 identified one medium-severity blocker: RPC failure was conflated with
+  confirmed on-chain feed unavailability and wrongly promised paused timeouts.
+  The fix adds a distinct unverified client status, preserves fail-closed UI
+  controls, and warns that deadlines may continue. Initial, malformed, cached
+  failure, confirmed-feed and browser cross-client cases now cover it.
+  Review converged at **A2** on source hash
+  `c7217b06eeeda4ad82a6b1a56c9f81e14d3e8292dc08b23b61387586de40c14c`.
+  A2 independently verified all 88 file hashes and ran 108 affected frontend
+  tests. No objective blockers remain. The prior low-severity deployment-helper
+  wallet/client mismatch robustness item remains deferred; current callers use
+  matching loopback transports. Full ledger: `outage-review.json`.
+- The reviewed local candidate is deployed at
+  `0x9a676e781a523b5d0c0e43731313a708cb607508` on chain 31337, using local simulation
+  feed `0x610178dA211FEF7D417bC0e6FeD39F05609AD788`. `.env.local` and the running
+  `http://127.0.0.1:5173/` app now point to it. Ready/round 1/recovery 0, the fixed
+  dictionary root, initial game ID, UI configuration and word input were checked
+  with no page errors. Earlier contracts remain present. Prior dictionary-v2
+  configuration used `0x8a791620dd6260079bf849dc5567adc3f2fdc318` with source
+  `fa4b339`; restore that matching source/configuration to access its old games.
+  No public transaction or deployment was performed. These outage updates remain
+  uncommitted. Local screenshot: `/tmp/etherman-outage-local.png`.
+
+
 ## Full dictionary v2 — November 9, 2026
 
 User approved removing the arbitrary word-length filter, widening masks,

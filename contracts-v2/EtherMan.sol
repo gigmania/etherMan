@@ -7,6 +7,10 @@ interface IDictionaryVerifier {
     function verify(bytes calldata proof, bytes32[] calldata publicInputs) external view returns (bool);
 }
 
+interface ISequencerUptimeFeed {
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
+}
+
 /// @title EtherMan — interactive, committed-word Hangman escrow
 /// @notice Local/testnet release candidate. A creator must answer turns and reveal
 /// the committed word. Responses are provisional until the whole transcript is checked.
@@ -15,10 +19,16 @@ contract EtherMan {
     uint256 private constant SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     address public immutable dictionaryVerifier;
     bytes32 public immutable dictionaryRoot;
+    address public immutable sequencerUptimeFeed;
+    uint80 public observedRoundId;
+    uint256 public recoveryUntil;
+    uint256 public constant RECOVERY_GRACE = 1 days;
     uint256 public constant TURN_TIMEOUT = 1 days;
     uint256 public constant OPEN_TIMEOUT = 7 days;
     uint256 public constant MAX_STAKE = 1 ether;
     uint8 public constant NO_LETTER = 26;
+
+    enum NetworkStatus { Unavailable, Down, RecoveryPending, Ready }
 
     enum State { Open, ChallengerTurn, CreatorTurn, AwaitReveal, Settled, Cancelled }
 
@@ -64,6 +74,12 @@ contract EtherMan {
     error InvalidDictionaryConfiguration();
     error InvalidDictionaryProof();
     error CommitmentAlreadyUsed();
+    error InvalidSequencerConfiguration();
+    error SequencerUnavailable();
+    error SequencerDown();
+    error RecoverySyncRequired();
+
+    event RecoveryGraceStarted(uint80 indexed roundId, uint256 recoveryUntil);
 
     event GameCreated(uint256 indexed gameId, address indexed creator, bytes32 commitment, uint256 stake, uint8 wordLength, uint8 maxMisses, uint256 deadline);
     event GameJoined(uint256 indexed gameId, address indexed challenger, uint256 deadline);
@@ -74,12 +90,35 @@ contract EtherMan {
     event GameCancelled(uint256 indexed gameId, address indexed creator, uint256 amount);
     event Withdrawn(address indexed account, address indexed recipient, uint256 amount);
 
-    constructor(address verifier, bytes32 root) {
+    constructor(address verifier, bytes32 root, address uptimeFeed) {
         if (verifier.code.length == 0 || uint256(root) == 0 || uint256(root) >= SNARK_SCALAR_FIELD) {
             revert InvalidDictionaryConfiguration();
         }
         dictionaryVerifier = verifier;
         dictionaryRoot = root;
+        if (uptimeFeed.code.length == 0) revert InvalidSequencerConfiguration();
+        sequencerUptimeFeed = uptimeFeed;
+        (bool valid, bool down, uint80 roundId) = _sequencerSnapshot();
+        if (!valid || down) revert InvalidSequencerConfiguration();
+        observedRoundId = roundId;
+    }
+
+    /// @notice Reports feed availability and whether a new healthy round needs recording.
+    /// @dev Heartbeats can refresh feed timestamps without changing its round. They
+    /// must not renew grace, and an old healthy timestamp is not a stale-price test.
+    function getNetworkStatus() public view returns (NetworkStatus status, uint80 roundId, uint256 graceUntil) {
+        (bool valid, bool down, uint80 currentRound) = _sequencerSnapshot();
+        graceUntil = recoveryUntil;
+        if (!valid) return (NetworkStatus.Unavailable, 0, graceUntil);
+        roundId = currentRound;
+        if (down) return (NetworkStatus.Down, roundId, graceUntil);
+        status = roundId > observedRoundId ? NetworkStatus.RecoveryPending : NetworkStatus.Ready;
+    }
+
+    /// @notice Anyone may record recovery. The grace period starts when this
+    /// contract observes a new healthy round, not at a potentially delayed L1 timestamp.
+    function syncSequencer() external {
+        _syncSequencer();
     }
 
     /// @dev abi.encode, not packed encoding. The salt must be cryptographically random.
@@ -88,6 +127,7 @@ contract EtherMan {
     }
 
     function createGame(bytes32 commitment, uint8 wordLength, uint8 maxMisses, bytes calldata dictionaryProof) external payable returns (uint256 gameId) {
+        _syncSequencer();
         if (commitment == bytes32(0) || wordLength == 0 || wordLength > DictionaryConfig.MAX_WORD_LENGTH || maxMisses == 0 || maxMisses > 8) revert InvalidInput();
         if (msg.value == 0 || msg.value > MAX_STAKE) revert InvalidStake();
         if (usedCommitments[commitment]) revert CommitmentAlreadyUsed();
@@ -127,6 +167,7 @@ contract EtherMan {
     function joinGame(uint256 gameId) external payable {
         Game storage game = _game(gameId);
         _state(game, State.Open);
+        _syncSequencer();
         _beforeDeadline(game);
         if (msg.sender == game.creator) revert Unauthorized();
         if (msg.value != game.stake) revert InvalidStake();
@@ -140,6 +181,7 @@ contract EtherMan {
     function guess(uint256 gameId, uint8 letter) external {
         Game storage game = _game(gameId);
         _state(game, State.ChallengerTurn);
+        _syncSequencer();
         _beforeDeadline(game);
         if (msg.sender != game.challenger) revert Unauthorized();
         if (letter >= 26) revert InvalidInput();
@@ -155,6 +197,7 @@ contract EtherMan {
     function respond(uint256 gameId, uint8 expectedLetter, uint32 mask) external {
         Game storage game = _game(gameId);
         _state(game, State.CreatorTurn);
+        _syncSequencer();
         _beforeDeadline(game);
         if (msg.sender != game.creator) revert Unauthorized();
         if (expectedLetter != game.pendingLetter) revert InvalidInput();
@@ -175,6 +218,7 @@ contract EtherMan {
     function concede(uint256 gameId) external {
         Game storage game = _game(gameId);
         _state(game, State.ChallengerTurn);
+        _syncSequencer();
         _beforeDeadline(game);
         if (msg.sender != game.challenger) revert Unauthorized();
         _requestReveal(gameId, game);
@@ -184,6 +228,7 @@ contract EtherMan {
     function reveal(uint256 gameId, string calldata word, bytes32 salt) external {
         Game storage game = _game(gameId);
         _state(game, State.AwaitReveal);
+        _syncSequencer();
         _beforeDeadline(game);
         if (msg.sender != game.creator) revert Unauthorized();
         if (computeCommitment(game.creator, word, salt) != game.commitment) revert InvalidCommitment();
@@ -221,10 +266,19 @@ contract EtherMan {
     function claimTimeout(uint256 gameId) external {
         Game storage game = _game(gameId);
         if (game.state == State.Settled || game.state == State.Cancelled) revert InvalidState();
-        if (block.timestamp <= game.deadline) revert NotExpired();
+        // An unmatched deposit can always be refunded after its ordinary expiry.
         if (game.state == State.Open) {
+            if (block.timestamp <= game.deadline) revert NotExpired();
             _cancel(gameId, game);
-        } else if (game.state == State.ChallengerTurn) {
+            return;
+        }
+        (NetworkStatus status,,) = getNetworkStatus();
+        _requireAvailable(status);
+        // Do not update the checkpoint then revert NotExpired, which would roll
+        // back its timestamp. A player action or syncSequencer records recovery.
+        if (status == NetworkStatus.RecoveryPending) revert RecoverySyncRequired();
+        if (block.timestamp <= _effectiveDeadline(game)) revert NotExpired();
+        if (game.state == State.ChallengerTurn) {
             // A lying creator must not win simply because a challenger went offline.
             _requestReveal(gameId, game);
         } else {
@@ -268,7 +322,46 @@ contract EtherMan {
     }
 
     function _beforeDeadline(Game storage game) private view {
-        if (block.timestamp > game.deadline) revert Expired();
+        if (block.timestamp > _effectiveDeadline(game)) revert Expired();
+    }
+
+    function _effectiveDeadline(Game storage game) private view returns (uint256) {
+        if (game.state != State.Open && game.state < State.Settled && recoveryUntil > game.deadline) {
+            return recoveryUntil;
+        }
+        return game.deadline;
+    }
+
+    function _requireAvailable(NetworkStatus status) private pure {
+        if (status == NetworkStatus.Unavailable) revert SequencerUnavailable();
+        if (status == NetworkStatus.Down) revert SequencerDown();
+    }
+
+    function _syncSequencer() private {
+        (NetworkStatus status, uint80 roundId,) = getNetworkStatus();
+        _requireAvailable(status);
+        if (status == NetworkStatus.RecoveryPending) {
+            observedRoundId = roundId;
+            recoveryUntil = block.timestamp + RECOVERY_GRACE;
+            emit RecoveryGraceStarted(roundId, recoveryUntil);
+        }
+    }
+
+    function _sequencerSnapshot() private view returns (bool valid, bool down, uint80 roundId) {
+        (bool success, bytes memory result) = sequencerUptimeFeed.staticcall(
+            abi.encodeCall(ISequencerUptimeFeed.latestRoundData, ())
+        );
+        if (!success || result.length != 160) return (false, false, 0);
+        // Decode full words before checking narrowed ABI fields. This makes
+        // malformed uint80/int256 answers fail closed instead of reverting a view.
+        (uint256 round, uint256 answer, uint256 startedAt, uint256 updatedAt, uint256 answeredInRound) =
+            abi.decode(result, (uint256, uint256, uint256, uint256, uint256));
+        if (
+            round == 0 || round > type(uint80).max || round < observedRoundId || answer > 1 ||
+            startedAt == 0 || updatedAt == 0 || startedAt > updatedAt || updatedAt > block.timestamp ||
+            answeredInRound != round
+        ) return (false, false, 0);
+        return (true, answer == 1, uint80(round));
     }
 
     function _fullMask(uint8 length) private pure returns (uint32) {

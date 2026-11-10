@@ -34,6 +34,34 @@ export type Game = {
   winner: Address;
   finalWord: string;
 };
+export type NetworkStatus = {
+  // -1 is a client-only observation failure, never a contract feed status.
+  status: -1 | 0 | 1 | 2 | 3;
+  roundId: bigint;
+  recoveryUntil: bigint;
+};
+export const unverifiedNetwork: NetworkStatus = {
+  status: -1,
+  roundId: 0n,
+  recoveryUntil: 0n,
+};
+export const unverifiedHealthMessage =
+  "Network health is unverified. On-chain deadlines may continue. This app cannot confirm timeout protection. Check your connection and retry promptly.";
+export function effectiveDeadline(game: Game, network: NetworkStatus) {
+  return game.state >= 1 &&
+    game.state <= 3 &&
+    network.status === 3 &&
+    network.recoveryUntil > game.deadline
+    ? network.recoveryUntil
+    : game.deadline;
+}
+export function gameTimeLeft(game: Game, now: number, network: NetworkStatus) {
+  if (game.state >= 1 && game.state <= 3 && network.status === -1)
+    return "Health unverified — deadlines may continue";
+  if (game.state >= 1 && game.state <= 3 && network.status !== 3)
+    return "Timeouts paused";
+  return timeLeft(effectiveDeadline(game, network), now);
+}
 export type Recovery = {
   version: 1;
   chainId: number;
@@ -192,18 +220,25 @@ export function gameActions(
   game: Game,
   address: string | undefined,
   now: number,
+  network: NetworkStatus = unverifiedNetwork,
 ) {
   const role = roleOf(game, address);
-  const expired = BigInt(now) > game.deadline;
+  const expired = BigInt(now) > effectiveDeadline(game, network);
   const active = game.state < 4;
+  const ready = network.status === 3;
   return {
-    join: game.state === 0 && !expired && !!address && role === "spectator",
+    join:
+      ready &&
+      game.state === 0 &&
+      !expired &&
+      !!address &&
+      role === "spectator",
     cancel: game.state === 0 && role === "creator",
-    guess: game.state === 1 && !expired && role === "challenger",
-    respond: game.state === 2 && !expired && role === "creator",
-    reveal: game.state === 3 && !expired && role === "creator",
-    concede: game.state === 1 && !expired && role === "challenger",
-    timeout: active && expired && !!address,
+    guess: ready && game.state === 1 && !expired && role === "challenger",
+    respond: ready && game.state === 2 && !expired && role === "creator",
+    reveal: ready && game.state === 3 && !expired && role === "creator",
+    concede: ready && game.state === 1 && !expired && role === "challenger",
+    timeout: active && expired && !!address && (game.state === 0 || ready),
   };
 }
 export function timeLeft(deadline: bigint, now: number) {

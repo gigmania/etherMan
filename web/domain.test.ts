@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { parseEther, type Address, type Hex } from "viem";
 import {
   gameActions,
+  effectiveDeadline,
+  gameTimeLeft,
+  type NetworkStatus,
   maskFor,
   parseRecovery,
   parseStake,
@@ -26,6 +29,7 @@ const backup = {
   commitment,
 };
 const expected = { chainId: 31337, creator, contract, commitment };
+const network: NetworkStatus = { status: 3, roundId: 1n, recoveryUntil: 0n };
 const game: Game = {
   creator,
   challenger,
@@ -138,21 +142,23 @@ describe("game state and masks", () => {
     expect(visibleWord(5, [4, 19], [9, 2])).toEqual(["e", "t", "", "e", ""]);
   });
   it("permits a challenger guess through the exact deadline, then only timeout", () => {
-    expect(gameActions(game, challenger, 100).guess).toBe(true);
-    expect(gameActions(game, challenger, 101).guess).toBe(false);
-    expect(gameActions(game, challenger, 101).timeout).toBe(true);
+    expect(gameActions(game, challenger, 100, network).guess).toBe(true);
+    expect(gameActions(game, challenger, 101, network).guess).toBe(false);
+    expect(gameActions(game, challenger, 101, network).timeout).toBe(true);
   });
   it("restricts roles and terminal states", () => {
     expect(roleOf(game, creator)).toBe("creator");
-    expect(gameActions(game, creator, 90).guess).toBe(false);
-    expect(gameActions(game, undefined, 101).timeout).toBe(false);
-    expect(gameActions({ ...game, state: 4 }, challenger, 101).timeout).toBe(
-      false,
-    );
-    expect(gameActions({ ...game, state: 3 }, creator, 99).reveal).toBe(true);
-    expect(gameActions({ ...game, state: 3 }, challenger, 99).reveal).toBe(
-      false,
-    );
+    expect(gameActions(game, creator, 90, network).guess).toBe(false);
+    expect(gameActions(game, undefined, 101, network).timeout).toBe(false);
+    expect(
+      gameActions({ ...game, state: 4 }, challenger, 101, network).timeout,
+    ).toBe(false);
+    expect(
+      gameActions({ ...game, state: 3 }, creator, 99, network).reveal,
+    ).toBe(true);
+    expect(
+      gameActions({ ...game, state: 3 }, challenger, 99, network).reveal,
+    ).toBe(false);
   });
   it("does not let creators join their own lobby", () => {
     expect(
@@ -164,6 +170,7 @@ describe("game state and masks", () => {
         },
         creator,
         90,
+        network,
       ).join,
     ).toBe(false);
     expect(
@@ -175,7 +182,91 @@ describe("game state and masks", () => {
         },
         challenger,
         90,
+        network,
       ).join,
     ).toBe(true);
   });
+});
+
+describe("network recovery deadlines", () => {
+  it("defaults to unverified and blocks active actions", () => {
+    expect(gameActions(game, challenger, 90).guess).toBe(false);
+    expect(gameActions(game, creator, 101).timeout).toBe(false);
+  });
+  it.each([0, 1, 2] as const)(
+    "blocks play and active timeouts with network status %s",
+    (status) => {
+      const health = { ...network, status };
+      expect(
+        gameActions({ ...game, state: 0 }, challenger, 90, health).join,
+      ).toBe(false);
+      expect(gameActions(game, challenger, 90, health)).toMatchObject({
+        guess: false,
+        concede: false,
+      });
+      expect(
+        gameActions({ ...game, state: 2 }, creator, 90, health).respond,
+      ).toBe(false);
+      expect(
+        gameActions({ ...game, state: 3 }, creator, 90, health).reveal,
+      ).toBe(false);
+      expect(gameActions(game, creator, 101, health).timeout).toBe(false);
+      expect(gameTimeLeft(game, 101, health)).toBe("Timeouts paused");
+      expect(
+        gameActions({ ...game, state: 0 }, creator, 90, health).cancel,
+      ).toBe(true);
+      expect(
+        gameActions({ ...game, state: 0 }, challenger, 101, health).timeout,
+      ).toBe(true);
+    },
+  );
+  it.each([1, 2, 3])(
+    "extends every unsettled active state %s, including expired unclaimed turns",
+    (state) => {
+      const health = { ...network, recoveryUntil: 200n };
+      const activeGame = { ...game, state };
+      expect(effectiveDeadline(activeGame, health)).toBe(200n);
+      expect(gameActions(activeGame, creator, 200, health).timeout).toBe(false);
+      expect(gameActions(activeGame, creator, 201, health).timeout).toBe(true);
+      expect(gameTimeLeft(activeGame, 199, health)).toBe("1s left");
+      expect(gameTimeLeft(activeGame, 200, health)).toBe("0s left");
+      expect(effectiveDeadline({ ...activeGame, deadline: 300n }, health)).toBe(
+        300n,
+      );
+    },
+  );
+  it("does not extend open expiry or completed games", () => {
+    const health = { ...network, recoveryUntil: 200n };
+    for (const state of [0, 4, 5])
+      expect(effectiveDeadline({ ...game, state }, health)).toBe(100n);
+    expect(
+      gameActions({ ...game, state: 0 }, challenger, 101, health).timeout,
+    ).toBe(true);
+  });
+});
+
+it("does not promise timeout protection when RPC health is unknown", () => {
+  const unknown = { ...network, status: -1 as const };
+  expect(gameTimeLeft(game, 101, unknown)).toContain("deadlines may continue");
+  expect(gameTimeLeft(game, 101, unknown)).not.toContain("paused");
+  expect(gameActions(game, challenger, 90, unknown)).toMatchObject({
+    guess: false,
+    concede: false,
+    timeout: false,
+  });
+  expect(gameActions({ ...game, state: 2 }, creator, 90, unknown).respond).toBe(
+    false,
+  );
+  expect(gameActions({ ...game, state: 3 }, creator, 90, unknown).reveal).toBe(
+    false,
+  );
+  expect(gameActions({ ...game, state: 0 }, challenger, 90, unknown).join).toBe(
+    false,
+  );
+  expect(gameActions({ ...game, state: 0 }, creator, 90, unknown).cancel).toBe(
+    true,
+  );
+  expect(
+    gameActions({ ...game, state: 0 }, challenger, 101, unknown).timeout,
+  ).toBe(true);
 });

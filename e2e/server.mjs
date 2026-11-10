@@ -21,7 +21,8 @@ try {
   process.env.VITE_CHAIN_ID = '31337'
   process.env.VITE_RPC_URL = chain.url
   process.env.VITE_CONTRACT_ADDRESS = contract.address
-  const state = { rpcUrl: chain.url, accounts: chain.accounts.slice(0, 4), contract: contract.address, word, salt, commitment }
+  const sequencerFeed = await chain.client.readContract({ ...contract, functionName: 'sequencerUptimeFeed' })
+  const state = { sequencerFeed, rpcUrl: chain.url, accounts: chain.accounts.slice(0, 4), contract: contract.address, word, salt, commitment }
   server = await createServer({
     server: { host: '127.0.0.1', port: 4173, strictPort: true },
     plugins: [{ name: 'test-fixture-only', configureServer(vite) {

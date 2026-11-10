@@ -11,6 +11,11 @@ export const etherManAbi = [
         "internalType": "bytes32",
         "name": "root",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "uptimeFeed",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -53,6 +58,11 @@ export const etherManAbi = [
   },
   {
     "inputs": [],
+    "name": "InvalidSequencerConfiguration",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InvalidStake",
     "type": "error"
   },
@@ -73,7 +83,22 @@ export const etherManAbi = [
   },
   {
     "inputs": [],
+    "name": "RecoverySyncRequired",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Reentrancy",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SequencerDown",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SequencerUnavailable",
     "type": "error"
   },
   {
@@ -300,6 +325,25 @@ export const etherManAbi = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint80",
+        "name": "roundId",
+        "type": "uint80"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "recoveryUntil",
+        "type": "uint256"
+      }
+    ],
+    "name": "RecoveryGraceStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "gameId",
         "type": "uint256"
@@ -387,6 +431,19 @@ export const etherManAbi = [
   {
     "inputs": [],
     "name": "OPEN_TIMEOUT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "RECOVERY_GRACE",
     "outputs": [
       {
         "internalType": "uint256",
@@ -673,6 +730,29 @@ export const etherManAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getNetworkStatus",
+    "outputs": [
+      {
+        "internalType": "enum EtherMan.NetworkStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint80",
+        "name": "roundId",
+        "type": "uint80"
+      },
+      {
+        "internalType": "uint256",
+        "name": "graceUntil",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -706,6 +786,32 @@ export const etherManAbi = [
   {
     "inputs": [],
     "name": "nextGameId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "observedRoundId",
+    "outputs": [
+      {
+        "internalType": "uint80",
+        "name": "",
+        "type": "uint80"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "recoveryUntil",
     "outputs": [
       {
         "internalType": "uint256",
@@ -758,6 +864,26 @@ export const etherManAbi = [
       }
     ],
     "name": "reveal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sequencerUptimeFeed",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "syncSequencer",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

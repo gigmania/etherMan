@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-export async function deployBundle({ client, wallet, waitForReceipt }) {
+export async function deployBundle({ client, wallet, waitForReceipt, sequencerUptimeFeed }) {
   // This utility is deliberately local-only, even if a caller supplies a client.
   const url = new URL(client.transport.url);
   assert(['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname), 'Deployment must use loopback');
@@ -9,7 +9,10 @@ export async function deployBundle({ client, wallet, waitForReceipt }) {
   const manifest = JSON.parse(await readFile('dictionary/prover-manifest.json', 'utf8'));
   const addresses = {};
   let game;
-  for (const name of ['ZKTranscriptLib', 'RelationsLib', 'HonkVerifier', 'EtherMan']) {
+  // The mutable feed is a chain-31337-only fixture. Public releases must bind
+  // the reviewed network's official uptime proxy, never this simulation.
+  const names = [...(sequencerUptimeFeed ? [] : ['LocalSequencerFeed']), 'ZKTranscriptLib', 'RelationsLib', 'HonkVerifier', 'EtherMan'];
+  for (const name of names) {
     const artifact = JSON.parse(await readFile(`artifacts/${name}.json`, 'utf8'));
     let bytecode = artifact.bytecode.slice(2);
     for (const libraries of Object.values(artifact.linkReferences ?? {})) {
@@ -22,7 +25,7 @@ export async function deployBundle({ client, wallet, waitForReceipt }) {
       }
     }
     assert.match(bytecode, /^[0-9a-fA-F]+$/, 'Unresolved bytecode link');
-    const hash = await wallet.deployContract({ abi: artifact.abi, bytecode: `0x${bytecode}`, ...(name === 'EtherMan' ? { args: [addresses.HonkVerifier, manifest.root] } : {}) });
+    const hash = await wallet.deployContract({ abi: artifact.abi, bytecode: `0x${bytecode}`, ...(name === 'EtherMan' ? { args: [addresses.HonkVerifier, manifest.root, sequencerUptimeFeed ?? addresses.LocalSequencerFeed] } : {}) });
     const receipt = await waitForReceipt({ hash });
     assert.equal(receipt.status, 'success');
     assert.ok(receipt.contractAddress);
@@ -30,5 +33,6 @@ export async function deployBundle({ client, wallet, waitForReceipt }) {
     if (name === 'EtherMan') game = { address: receipt.contractAddress, abi: artifact.abi };
   }
   assert.equal(await client.readContract({ ...game, functionName: 'dictionaryRoot' }), manifest.root);
+  assert.equal((await client.readContract({ ...game, functionName: 'sequencerUptimeFeed' })).toLowerCase(), (sequencerUptimeFeed ?? addresses.LocalSequencerFeed).toLowerCase());
   return game;
 }

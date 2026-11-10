@@ -23,9 +23,100 @@ import {
   setupIssue,
   targetChain,
 } from "./config";
-import type { Game } from "./domain";
+import {
+  unverifiedNetwork,
+  unverifiedHealthMessage,
+  type Game,
+  type NetworkStatus,
+} from "./domain";
 
 export const abi: Abi = etherManAbi;
+export const networkErrors = {
+  SequencerUnavailable:
+    "Network health is unavailable. Active game actions and timeout forfeitures are paused. Try again after the health check recovers.",
+  SequencerDown:
+    "The network sequencer is down. Active game actions and timeout forfeitures are paused until recovery.",
+  RecoverySyncRequired:
+    "Network recovery needs to be recorded. Any connected wallet can start the 24-hour recovery grace period.",
+};
+export class NetworkHealthError extends Error {}
+async function readNetworkStatus(): Promise<NetworkStatus> {
+  if (
+    !contractAddress ||
+    !networkAllowed ||
+    (await publicClient.getChainId()) !== targetChain.id
+  )
+    throw new NetworkHealthError(unverifiedHealthMessage);
+  const result = (await publicClient.readContract({
+    address: contractAddress,
+    abi,
+    functionName: "getNetworkStatus",
+  })) as readonly [number, bigint, bigint];
+  if (
+    !Array.isArray(result) ||
+    result.length !== 3 ||
+    ![0, 1, 2, 3].includes(result[0]) ||
+    typeof result[1] !== "bigint" ||
+    typeof result[2] !== "bigint" ||
+    result[1] < 0n ||
+    result[2] < 0n
+  )
+    throw new NetworkHealthError(unverifiedHealthMessage);
+  return {
+    status: result[0] as NetworkStatus["status"],
+    roundId: result[1],
+    recoveryUntil: result[2],
+  };
+}
+export function useNetworkStatus() {
+  const deployment = useDeployment();
+  const query = useQuery({
+    queryKey: ["network-status", targetChain.id, contractAddress],
+    enabled: deployment.data === true,
+    refetchInterval: 5000,
+    retry: false,
+    queryFn: readNetworkStatus,
+  });
+  // A failed refresh must never keep a previously healthy cached result active.
+  return {
+    ...query,
+    data:
+      deployment.data === true && !query.isError && !query.isPending
+        ? (query.data ?? unverifiedNetwork)
+        : unverifiedNetwork,
+  };
+}
+export async function assertNetworkReady() {
+  let network: NetworkStatus;
+  try {
+    network = await readNetworkStatus();
+  } catch {
+    throw new NetworkHealthError(unverifiedHealthMessage);
+  }
+  if (network.status !== 3)
+    throw new NetworkHealthError(
+      network.status === 1
+        ? networkErrors.SequencerDown
+        : network.status === 2
+          ? networkErrors.RecoverySyncRequired
+          : networkErrors.SequencerUnavailable,
+    );
+}
+function networkRevertMessage(error: unknown): string | undefined {
+  // Read only the decoded error identifier, never RPC messages or call arguments.
+  let cause: unknown = error;
+  for (
+    let depth = 0;
+    depth < 8 && cause && typeof cause === "object";
+    depth++
+  ) {
+    const item = cause as { data?: { errorName?: unknown }; cause?: unknown };
+    const name = item.data?.errorName;
+    if (typeof name === "string" && Object.hasOwn(networkErrors, name))
+      return networkErrors[name as keyof typeof networkErrors];
+    cause = item.cause;
+  }
+}
 export function useDeployment() {
   return useQuery({
     queryKey: ["deployment", targetChain.id, contractAddress],
@@ -176,6 +267,7 @@ export type Action =
   | "reveal"
   | "cancelGame"
   | "claimTimeout"
+  | "syncSequencer"
   | "withdrawTo";
 type TransactionState = {
   phase: "idle" | "simulating" | "signing" | "pending" | "success" | "error";
@@ -332,15 +424,17 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         const text = error instanceof Error ? error.message : "";
         const known = error instanceof ActionError;
-        const message = /reject|denied|4001/i.test(text)
-          ? "Signature declined. No transaction was submitted."
-          : known
-            ? text
-            : hash
-              ? "Confirmation is taking longer than expected. Check the transaction before trying again."
-              : /insufficient funds/i.test(text)
-                ? "Your wallet needs enough ETH for the stake and network gas."
-                : "The transaction could not be prepared or submitted. Refresh the game and check your wallet, network, and inputs.";
+        const message =
+          networkRevertMessage(error) ??
+          (/reject|denied|4001/i.test(text)
+            ? "Signature declined. No transaction was submitted."
+            : known
+              ? text
+              : hash
+                ? "Confirmation is taking longer than expected. Check the transaction before trying again."
+                : /insufficient funds/i.test(text)
+                  ? "Your wallet needs enough ETH for the stake and network gas."
+                  : "The transaction could not be prepared or submitted. Refresh the game and check your wallet, network, and inputs.");
         setState({ phase: "error", label, hash, message });
         return undefined;
       } finally {
@@ -349,7 +443,9 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         if (mined) {
           await queryClient.invalidateQueries({
             predicate: (query) =>
-              ["game", "games", "credits"].includes(String(query.queryKey[0])),
+              ["game", "games", "credits", "network-status"].includes(
+                String(query.queryKey[0]),
+              ),
           });
         }
         active.current = false;

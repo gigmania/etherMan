@@ -3,6 +3,7 @@ pragma solidity 0.8.38;
 
 import {DictionaryConfig} from "../contracts-v2/generated/DictionaryConfig.sol";
 import {EtherMan} from "../contracts-v2/EtherMan.sol";
+import {MockSequencerFeed} from "./MockSequencerFeed.sol";
 import {MockDictionaryVerifier} from "./MockDictionaryVerifier.sol";
 
 interface GateVm {
@@ -40,10 +41,12 @@ contract DictionaryGateTest {
     bytes32 private constant SALT = keccak256("synthetic gate fixture");
     MockDictionaryVerifier private verifier;
     EtherMan private game;
+    MockSequencerFeed private feed;
 
     function setUp() public {
         verifier = new MockDictionaryVerifier();
-        game = new EtherMan(address(verifier), ROOT);
+        feed = new MockSequencerFeed();
+        game = new EtherMan(address(verifier), ROOT, address(feed));
         vm.deal(CREATOR, 1 ether);
         vm.deal(CHALLENGER, 1 ether);
         vm.deal(address(this), 1 ether);
@@ -75,16 +78,16 @@ contract DictionaryGateTest {
 
     function testConstructorRejectsMissingCodeAndNonCanonicalRoots() public {
         vm.expectRevert(EtherMan.InvalidDictionaryConfiguration.selector);
-        new EtherMan(address(0), ROOT);
+        new EtherMan(address(0), ROOT, address(feed));
         vm.expectRevert(EtherMan.InvalidDictionaryConfiguration.selector);
-        new EtherMan(CREATOR, ROOT);
+        new EtherMan(CREATOR, ROOT, address(feed));
         vm.expectRevert(EtherMan.InvalidDictionaryConfiguration.selector);
-        new EtherMan(address(verifier), bytes32(0));
+        new EtherMan(address(verifier), bytes32(0), address(feed));
         vm.expectRevert(EtherMan.InvalidDictionaryConfiguration.selector);
-        new EtherMan(address(verifier), bytes32(PRIME));
+        new EtherMan(address(verifier), bytes32(PRIME), address(feed));
         vm.expectRevert(EtherMan.InvalidDictionaryConfiguration.selector);
-        new EtherMan(address(verifier), bytes32(type(uint256).max));
-        EtherMan boundary = new EtherMan(address(verifier), bytes32(PRIME - 1));
+        new EtherMan(address(verifier), bytes32(type(uint256).max), address(feed));
+        EtherMan boundary = new EtherMan(address(verifier), bytes32(PRIME - 1), address(feed));
         require(boundary.dictionaryRoot() == bytes32(PRIME - 1), "root changed");
         require(boundary.dictionaryVerifier() == address(verifier), "verifier changed");
     }
@@ -116,7 +119,7 @@ contract DictionaryGateTest {
 
     function testVerifierCannotMutateStateUnderStaticCall() public {
         MutatingVerifier malicious = new MutatingVerifier();
-        game = new EtherMan(address(malicious), ROOT);
+        game = new EtherMan(address(malicious), ROOT, address(feed));
         vm.prank(CREATOR);
         vm.expectRevert(EtherMan.InvalidDictionaryProof.selector);
         game.createGame{value: STAKE, gas: 200_000}(SALT, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
@@ -125,7 +128,7 @@ contract DictionaryGateTest {
     }
 
     function testMalformedVerifierReturnFailsClosed() public {
-        game = new EtherMan(address(new MalformedVerifier()), ROOT);
+        game = new EtherMan(address(new MalformedVerifier()), ROOT, address(feed));
         vm.expectRevert();
         _open(SALT);
         _unchanged(SALT);

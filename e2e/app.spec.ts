@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
-import { createPublicClient, http, parseAbi } from 'viem'
+import { createPublicClient, createWalletClient, http, parseAbi, toFunctionSelector } from 'viem'
+import { foundry } from 'viem/chains'
 
-type Fixture = { rpcUrl: string; accounts: string[]; contract: string; word: string; salt: string; commitment: string }
+type Fixture = { sequencerFeed: `0x${string}`; rpcUrl: string; accounts: string[]; contract: string; word: string; salt: string; commitment: string }
 
 async function wallet(page: Page, fixture: Fixture, account = 1) {
   await page.addInitScript(({ fixture, account }) => {
@@ -88,7 +89,7 @@ test('mobile and desktop layouts remain within the viewport', async ({ page }) =
   }
 })
 
-test('one-account wallet completes the game and withdrawal across rejection, chain changes, and reload', async ({ page, request }) => {
+test('one-account wallet completes the game across outages, recovery, rejection, chain changes, and reload', async ({ page, request }) => {
   test.setTimeout(60_000)
   const fixture: Fixture = await (await request.get('/__e2e-state')).json()
   await wallet(page, fixture)
@@ -110,7 +111,48 @@ test('one-account wallet completes the game and withdrawal across rejection, cha
   await expect(page.getByRole('heading', { name: 'Is there an “C”?' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submit letter positions' })).toHaveCount(0)
   await page.evaluate(() => (window as any).__testWallet.account(0))
+  // Loss of this browser's RPC observation is not an on-chain timeout pause.
+  const healthSelector = toFunctionSelector('getNetworkStatus()')
+  const rpcPattern = `${fixture.rpcUrl}/**`
+  const blockHealthRead = async (route: import('@playwright/test').Route) => {
+    const payload = route.request().postDataJSON()
+    if (payload?.method === 'eth_call' && payload.params?.[0]?.data?.startsWith(healthSelector)) await route.abort()
+    else await route.continue()
+  }
+  await page.route(rpcPattern, blockHealthRead)
+  try {
+    await expect(page.locator('.network-health')).toContainText('deadlines may continue', { timeout: 15_000 })
+    await expect(page.locator('.network-health')).not.toContainText('forfeitures are paused')
+    await expect(page.getByRole('button', { name: 'Submit letter positions' })).toHaveCount(0)
+    const independent = createPublicClient({ transport: http(fixture.rpcUrl) })
+    const actual = await independent.readContract({ address: fixture.contract as `0x${string}`, abi: parseAbi(['function getNetworkStatus() view returns (uint8,uint80,uint256)']), functionName: 'getNetworkStatus' })
+    expect(actual[0]).toBe(3)
+  } finally {
+    await page.unroute(rpcPattern, blockHealthRead)
+  }
   await expect(page.getByRole('button', { name: 'Submit letter positions' })).toBeEnabled()
+  const testChain = createPublicClient({ chain: foundry, transport: http(fixture.rpcUrl) })
+  const feedOwner = createWalletClient({ chain: foundry, account: fixture.accounts[0] as `0x${string}`, transport: http(fixture.rpcUrl) })
+  const setDown = async (down: boolean) => {
+    const hash = await feedOwner.writeContract({ address: fixture.sequencerFeed, abi: parseAbi(['function setDown(bool)']), functionName: 'setDown', args: [down], gas: 200_000n })
+    expect((await testChain.waitForTransactionReceipt({ hash })).status).toBe('success')
+  }
+  try {
+    await setDown(true)
+    await expect(page.getByText(/^Network sequencer is down\.?$/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Submit letter positions' })).toHaveCount(0)
+    await setDown(false)
+    await expect(page.getByText(/^Network recovery detected\.?$/)).toBeVisible()
+    await page.getByRole('button', { name: 'Start recovery grace period', exact: true }).click()
+    await expect(page.getByText(/^Recovery grace period\.?$/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Submit letter positions' })).toBeEnabled()
+  } finally {
+    // Preserve network readiness for the independent creation scenario if an
+    // outage assertion fails; the disposable chain remains shared by this file.
+    await setDown(false)
+    const hash = await feedOwner.writeContract({ address: fixture.contract as `0x${string}`, abi: parseAbi(['function syncSequencer()']), functionName: 'syncSequencer', gas: 200_000n })
+    expect((await testChain.waitForTransactionReceipt({ hash })).status).toBe('success')
+  }
   await expect(page.getByLabel('Your secret word (used locally to calculate positions)')).toHaveAttribute('type', 'text')
   await page.getByLabel('Your secret word (used locally to calculate positions)').fill('cat')
   await page.getByRole('button', { name: 'Submit letter positions' }).click()

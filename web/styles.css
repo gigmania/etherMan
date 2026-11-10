@@ -390,6 +390,16 @@ strong {
 .connection-note p {
   margin: 0;
 }
+.network-health {
+  align-items: flex-start;
+}
+.network-health > svg {
+  flex-shrink: 0;
+}
+.network-health p + p,
+.network-health .button {
+  margin-top: 8px;
+}
 .hero {
   display: grid;
   grid-template-columns: 1.25fr 0.85fr;
