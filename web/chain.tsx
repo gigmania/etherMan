@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useConnection, useWalletClient } from "wagmi";
 import {
   encodeFunctionData,
+  type Address,
   type Abi,
   type Hex,
   type TransactionReceipt,
@@ -29,6 +30,13 @@ import {
   type Game,
   type NetworkStatus,
 } from "./domain";
+import {
+  estimateFees,
+  quoteIncreased,
+  quoteIsStale,
+  type FeeQuote,
+} from "./fees";
+import { checkFinality, type Finality, type Inclusion } from "./finality";
 
 export const abi: Abi = etherManAbi;
 export const networkErrors = {
@@ -270,11 +278,30 @@ export type Action =
   | "syncSequencer"
   | "withdrawTo";
 type TransactionState = {
-  phase: "idle" | "simulating" | "signing" | "pending" | "success" | "error";
+  phase:
+    | "idle"
+    | "simulating"
+    | "review"
+    | "signing"
+    | "pending"
+    | "included"
+    | "cancelled"
+    | "error";
   label?: string;
   message?: string;
   hash?: Hex;
+  review?: {
+    account: Address;
+    contract: Address;
+    chainId: number;
+    value: bigint;
+    quote?: FeeQuote;
+    feeStatus: "ready" | "unavailable" | "refreshing";
+  };
+  inclusion?: Inclusion;
+  finality?: Finality;
 };
+type ReviewDecision = "continue" | "refresh" | "cancel";
 type TransactionContext = {
   state: TransactionState;
   busy: boolean;
@@ -285,11 +312,23 @@ type TransactionContext = {
     value?: bigint,
   ) => Promise<TransactionReceipt | undefined>;
   clear: () => void;
+  reviewDecision: (decision: ReviewDecision) => void;
 };
 const Context = createContext<TransactionContext | null>(null);
 // Only messages authored here are safe to show. RPC errors can include a
 // reveal's word/salt in decoded arguments, even when their prefix looks familiar.
 class ActionError extends Error {}
+class ReviewCancelled extends Error {}
+function cancellable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(new ReviewCancelled());
+    signal.addEventListener("abort", abort, { once: true });
+    work
+      .then(resolve, reject)
+      .finally(() => signal.removeEventListener("abort", abort));
+    if (signal.aborted) abort();
+  });
+}
 export function TransactionProvider({ children }: { children: ReactNode }) {
   const connection = useConnection();
   const wallet = useWalletClient();
@@ -297,8 +336,62 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [state, setState] = useState<TransactionState>({ phase: "idle" });
   const active = useRef(false);
+  const reviewChoice = useRef<((choice: ReviewDecision) => void) | undefined>(
+    undefined,
+  );
+  const reviewCancellation = useRef<AbortController | undefined>(undefined);
+  const mounted = useRef(true);
   const current = useRef(connection);
   current.current = connection;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      reviewCancellation.current?.abort();
+      reviewChoice.current?.("cancel");
+      reviewChoice.current = undefined;
+    };
+  }, []);
+  useEffect(() => {
+    if (state.phase !== "included" || !state.inclusion || !state.hash) return;
+    const inclusion = state.inclusion;
+    const hash = state.hash;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const poll = async () => {
+      const finality = await checkFinality(
+        publicClient,
+        targetChain.id,
+        inclusion,
+      );
+      if (cancelled) return;
+      setState((previous) =>
+        previous.phase === "included" && previous.hash === hash
+          ? {
+              ...previous,
+              finality,
+              ...(finality.status === "reorg"
+                ? { phase: "error", message: finality.message }
+                : {}),
+            }
+          : previous,
+      );
+      if (finality.status === "reorg") {
+        await queryClient.invalidateQueries({
+          predicate: (query) =>
+            ["game", "games", "credits", "network-status"].includes(
+              String(query.queryKey[0]),
+            ),
+        });
+      } else if (finality.status !== "finalized")
+        timer = setTimeout(poll, 15_000);
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [state.phase, state.hash, state.inclusion, queryClient]);
   const run = useCallback(
     async (
       label: string,
@@ -308,10 +401,15 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     ) => {
       if (active.current) return;
       active.current = true;
+      const reviewAbort = new AbortController();
+      reviewCancellation.current = reviewAbort;
       let hash: Hex | undefined;
       let mined = false;
       let cancelled = false;
       try {
+        // Snapshot all call arguments before any await/review. Never keep them
+        // in UI state, storage or error text (reveals contain the secret).
+        const callArgs = structuredClone(args);
         const account = current.current.address;
         if (
           setupIssue ||
@@ -354,24 +452,119 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         const expectedInput = encodeFunctionData({
           abi,
           functionName: action,
-          args,
+          args: callArgs,
         });
-        const simulation = await publicClient.simulateContract({
-          address: contractAddress,
-          abi,
-          functionName: action,
-          args,
-          account,
-          ...(value === undefined ? {} : { value }),
-        });
+        const simulate = () =>
+          publicClient.simulateContract({
+            address: contractAddress!,
+            abi,
+            functionName: action,
+            args: callArgs,
+            account,
+            ...(value === undefined ? {} : { value }),
+          });
+        await simulate();
         await verifyWallet();
+        const call = {
+          chainId: targetChain.id,
+          account,
+          to: contractAddress,
+          data: expectedInput,
+          value: value ?? 0n,
+        };
+        const reviewBase = {
+          account,
+          contract: contractAddress,
+          chainId: targetChain.id,
+          value: value ?? 0n,
+        };
+        const getEstimate = async (): Promise<FeeQuote | undefined> => {
+          setState({
+            phase: "review",
+            label,
+            message: "Refreshing the fee estimate…",
+            review: { ...reviewBase, feeStatus: "refreshing" },
+          });
+          try {
+            return await cancellable(
+              estimateFees(publicClient, call),
+              reviewAbort.signal,
+            );
+          } catch {
+            if (reviewAbort.signal.aborted) throw new ReviewCancelled();
+            return undefined;
+          }
+        };
+        let quote = await getEstimate();
+        let reviewMessage =
+          "Review the transaction value and estimated network fees before continuing.";
+        for (;;) {
+          if (!mounted.current || reviewAbort.signal.aborted)
+            throw new ReviewCancelled();
+          setState({
+            phase: "review",
+            label,
+            message: !quote
+              ? "Fee estimate unavailable. Refresh the estimate before continuing; no signature has been requested."
+              : reviewMessage,
+            review: {
+              ...reviewBase,
+              quote,
+              feeStatus: quote ? "ready" : "unavailable",
+            },
+          });
+          const choice = await cancellable(
+            new Promise<ReviewDecision>((resolve) => {
+              reviewChoice.current = resolve;
+            }),
+            reviewAbort.signal,
+          );
+          reviewChoice.current = undefined;
+          if (choice === "cancel") throw new ReviewCancelled();
+          await verifyWallet();
+          if (choice === "refresh") {
+            quote = await getEstimate();
+            continue;
+          }
+          if (!quote || quoteIsStale(quote)) {
+            reviewMessage =
+              "Fee estimate is stale. Refresh the estimate before continuing.";
+            continue;
+          }
+          await simulate();
+          const fresh = await getEstimate();
+          if (!fresh || quoteIncreased(quote, fresh) || quoteIsStale(fresh)) {
+            quote = fresh;
+            reviewMessage =
+              "The fee estimate changed or expired. Review the refreshed amounts before continuing.";
+            continue;
+          }
+          await verifyWallet();
+          if ((await publicClient.getChainId()) !== targetChain.id)
+            throw new ActionError("The RPC is connected to the wrong network.");
+          if (reviewAbort.signal.aborted) throw new ReviewCancelled();
+          if (quoteIsStale(fresh)) {
+            quote = fresh;
+            reviewMessage = "Fee estimate is stale. Refresh before continuing.";
+            continue;
+          }
+          quote = fresh;
+          break;
+        }
         setState({
           phase: "signing",
           label,
           message: "Review the amount and network in your wallet.",
         });
         hash = await wallet.data.writeContract({
-          ...simulation.request,
+          address: contractAddress,
+          abi,
+          functionName: action,
+          args: callArgs,
+          value: value ?? 0n,
+          type: "legacy",
+          gas: quote.gasLimit,
+          gasPrice: quote.gasPrice,
           chain: targetChain,
           account,
         });
@@ -379,7 +572,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
           phase: "pending",
           label,
           hash,
-          message: "Submitted. Waiting for an on-chain confirmation…",
+          message: "Submitted. Waiting for on-chain inclusion…",
         });
         const receipt = await publicClient.waitForTransactionReceipt({
           hash,
@@ -415,13 +608,31 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
             "The transaction reverted. No game state was changed; network gas may still be charged.",
           );
         setState({
-          phase: "success",
+          phase: "included",
           label,
           hash,
-          message: "Confirmed on-chain. Your game state has been refreshed.",
+          message: "Included on-chain",
+          inclusion: {
+            blockHash: receipt.blockHash,
+            blockNumber: receipt.blockNumber,
+          },
+          finality: {
+            status: "checking",
+            message:
+              "Checking canonical inclusion and finality. Inclusion alone is not finality.",
+          },
         });
         return receipt;
       } catch (error) {
+        if (error instanceof ReviewCancelled) {
+          setState({
+            phase: "cancelled",
+            label,
+            message:
+              "Transaction cancelled. No signature was requested or transaction submitted.",
+          });
+          return undefined;
+        }
         const text = error instanceof Error ? error.message : "";
         const known = error instanceof ActionError;
         const message =
@@ -449,11 +660,15 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
           });
         }
         active.current = false;
+        reviewChoice.current = undefined;
+        reviewCancellation.current = undefined;
       }
     },
     [deployment.data, wallet.data, queryClient],
   );
-  const busy = ["simulating", "signing", "pending"].includes(state.phase);
+  const busy = ["simulating", "review", "signing", "pending"].includes(
+    state.phase,
+  );
   return (
     <Context.Provider
       value={{
@@ -461,6 +676,12 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         run,
         busy,
         clear: () => !active.current && setState({ phase: "idle" }),
+        reviewDecision: (decision) => {
+          if (decision === "cancel") reviewCancellation.current?.abort();
+          const choose = reviewChoice.current;
+          reviewChoice.current = undefined;
+          choose?.(decision);
+        },
       }}
     >
       {children}

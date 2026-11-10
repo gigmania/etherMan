@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "compiler": "0.8.38+commit.1835d247.Emscripten.clang",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "evmVersion": "cancun",
+  "dictionaryRoot": "0x0fea52e1ba879dc3a2cc1a773bd49a5f8ab16b38580ed458bd6bf9c9731af53b",
+  "proverManifestSha256": "4a64ed3a0adcc57a805161c175819c494c5fd84e4320626250f00d3ba23712d3",
+  "deploymentPolicy": {
+    "chainId": 31337,
+    "localFixture": "LocalSequencerFeed",
+    "scrollForkUrl": "https://rpc.scroll.io/",
+    "scrollUptimeProxy": "0x45c2b8C204568A03Dc7A2E32B71D67Fe97F908A9",
+    "publicDeploymentEnabled": false
+  },
+  "sources": {
+    "contracts-v2/EtherMan.sol": "85fdc409cfa811ff775f50cd4a49f7f0011d319aa6c7bf81619d7d583a75c6f0",
+    "contracts-v2/generated/DictionaryConfig.sol": "ff4a95abf360ef1d70c06b92e7c984e347c7d65273a4b4535dc484ca9a776e46",
+    "contracts-v2/generated/DictionaryVerifier.sol": "4a44360a310604adc3fab0270a9f055dbd0f038520acf6d519ae088ea8ac80f5",
+    "contracts-v2/test/LocalSequencerFeed.sol": "434df5c0e8010c6d35e5a7e77031619ef6b223e443b695b83e8569196091e0f3"
+  },
+  "artifacts": {
+    "LocalSequencerFeed": {
+      "sha256": "095d0032e6b75a6137a7c963367914fe1f6bdd273e08253d3789f1c2d06ad619",
+      "sourceName": "contracts-v2/test/LocalSequencerFeed.sol",
+      "creationSha256": "7c751dec475f273afdbf6698f64fe6124ecfe057393c024a27923a922159f996",
+      "runtimeTemplateSha256": "ce5800eaa261a9de4f44d3a284d7785df6707edfdb3064557d28dd1339b25092",
+      "linkReferences": {},
+      "deployedLinkReferences": {},
+      "immutableReferences": {
+        "12405": [
+          {
+            "length": 32,
+            "start": 93
+          },
+          {
+            "length": 32,
+            "start": 227
+          }
+        ]
+      }
+    },
+    "ZKTranscriptLib": {
+      "sha256": "42eb2dd6487f09562300953364842030964ab3732c580bb2d315b704ba3d92d6",
+      "sourceName": "contracts-v2/generated/DictionaryVerifier.sol",
+      "creationSha256": "04e871b4faa336b24b3cb40d400947884fc4103dd96dc284b23511ba9f862812",
+      "runtimeTemplateSha256": "9acdb6ffbdbd36b0cc44bdfe7affccbfc1399b60730b29ee5eb708235e1cb3f6",
+      "linkReferences": {},
+      "deployedLinkReferences": {},
+      "immutableReferences": {}
+    },
+    "RelationsLib": {
+      "sha256": "04f96c840348078ff52a44b0547d429a0e5ca70d477810d20e12319cd687ede8",
+      "sourceName": "contracts-v2/generated/DictionaryVerifier.sol",
+      "creationSha256": "c58f3cde5d04c43dd17124384133351f88f6faa20ea268d0739c65578054b68a",
+      "runtimeTemplateSha256": "792394d6edf0a9fd84c1eda1974cd0d32771ee29ad1d9c18b578f1bb1af81978",
+      "linkReferences": {},
+      "deployedLinkReferences": {},
+      "immutableReferences": {}
+    },
+    "HonkVerifier": {
+      "sha256": "30bd3c664459d8299ea1bb6325d645adcfddf1842ac6fb687b22fdbf2ffcae1c",
+      "sourceName": "contracts-v2/generated/DictionaryVerifier.sol",
+      "creationSha256": "aa5036049638865a9bb09dd676c542c6502f67364797d804d7cda9b3bd39a9b5",
+      "runtimeTemplateSha256": "6a31512c385b3b6deef126fbc85ce569d5ce444df22d91e90a7a53a0d25467a6",
+      "linkReferences": {
+        "contracts-v2/generated/DictionaryVerifier.sol": {
+          "RelationsLib": [
+            {
+              "length": 20,
+              "start": 3375
+            }
+          ],
+          "ZKTranscriptLib": [
+            {
+              "length": 20,
+              "start": 669
+            }
+          ]
+        }
+      },
+      "deployedLinkReferences": {
+        "contracts-v2/generated/DictionaryVerifier.sol": {
+          "RelationsLib": [
+            {
+              "length": 20,
+              "start": 3048
+            }
+          ],
+          "ZKTranscriptLib": [
+            {
+              "length": 20,
+              "start": 342
+            }
+          ]
+        }
+      },
+      "immutableReferences": {
+        "10030": [
+          {
+            "length": 32,
+            "start": 91
+          },
+          {
+            "length": 32,
+            "start": 131
+          },
+          {
+            "length": 32,
+            "start": 239
+          },
+          {
+            "length": 32,
+            "start": 448
+          },
+          {
+            "length": 32,
+            "start": 2700
+          },
+          {
+            "length": 32,
+            "start": 3164
+          },
+          {
+            "length": 32,
+            "start": 3326
+          },
+          {
+            "length": 32,
+            "start": 5647
+          },
+          {
+            "length": 32,
+            "start": 5833
+          },
+          {
+            "length": 32,
+            "start": 5884
+          },
+          {
+            "length": 32,
+            "start": 6434
+          },
+          {
+            "length": 32,
+            "start": 11678
+          }
+        ],
+        "10032": [
+          {
+            "length": 32,
+            "start": 380
+          }
+        ],
+        "10034": [
+          {
+            "length": 32,
+            "start": 414
+          },
+          {
+            "length": 32,
+            "start": 2398
+          }
+        ],
+        "10036": [
+          {
+            "length": 32,
+            "start": 3367
+          },
+          {
+            "length": 32,
+            "start": 3469
+          },
+          {
+            "length": 32,
+            "start": 12492
+          }
+        ]
+      }
+    },
+    "EtherMan": {
+      "sha256": "0a4399a8eeb319460c1b3a8a1b95a22a2fd550d3bf7e95b19ebb6c8e39d6ac20",
+      "sourceName": "contracts-v2/EtherMan.sol",
+      "creationSha256": "3b16667ac47b2c3de8886de35609c79d32968b0f676a827c28bc1fc4889a885f",
+      "runtimeTemplateSha256": "0c0500adbb48cd4b866f7d2913c05e42c2070805d506b6ea63af4c32aeec4787",
+      "linkReferences": {},
+      "deployedLinkReferences": {},
+      "immutableReferences": {
+        "38": [
+          {
+            "length": 32,
+            "start": 664
+          },
+          {
+            "length": 32,
+            "start": 2168
+          }
+        ],
+        "40": [
+          {
+            "length": 32,
+            "start": 774
+          },
+          {
+            "length": 32,
+            "start": 1818
+          }
+        ],
+        "42": [
+          {
+            "length": 32,
+            "start": 1067
+          },
+          {
+            "length": 32,
+            "start": 7084
+          }
+        ]
+      }
+    }
+  }
+}

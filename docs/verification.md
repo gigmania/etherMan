@@ -2,6 +2,60 @@
 
 Local candidate on `codex/etherman-modernization`, based on legacy commit `2d3e58cc5356e0a836e25896258f1f4e162b5ad3`. Checks were performed before the modernization commit; no push or public deployment was performed. Checks below ran on November 6, 2026, with Node 26.3.0/npm 12.0.1 on macOS arm64. Recommended development runtime is Node 24.15+ LTS.
 
+## Release-hardening candidate — November 10, 2026
+
+Work began from outage commit `97a8dc6` on `codex/etherman-modernization`.
+The approved scope covers local deployment/artifact checks, fee review, separate
+inclusion/finality observations, tests and review. Contracts, dictionary, circuit,
+proof assets and recovery encoding are unchanged. No public transactions,
+mainnet signing, commits or pushes are part of this candidate.
+
+- 59 Foundry tests pass, including 256-run fuzz cases and 8,192 accounting
+  invariant calls.
+- All 12 real-proof local gameplay scenarios and all three local outage scenarios
+  pass through the hardened deployment helper.
+- The deployment implementer reports 14/14 release checks, including an actual
+  five-contract local bundle. A second bundle with the official uptime proxy
+  passed on a disposable Scroll state fork pinned to block 35,676,873, local
+  chain 31337. Verification includes exact initialized runtime rather than
+  masking constructor immutables. No upstream writes were performed.
+- Read-only Scroll RPC probes returned chain 534352 and distinct latest and
+  finalized heads. The finality tag was supported during the probe; this is not
+  evidence of a candidate transaction reaching finality. A synthetic 116-byte
+  envelope-size input to the official fee oracle returned 651,216,060,714 wei at
+  sampled gas price 120,108 wei. No transaction was signed or submitted; this is
+  an API/encoding smoke check, not a complete-game fee quote.
+
+Implementation, reproducibility commands, trust boundaries, sources, rollback
+and remaining public release gates: [release hardening](release-hardening.md).
+- Production build and TypeScript pass. EtherMan runtime remains 10,180 bytes;
+  existing worker externalization/chunk-size warnings remain.
+- Actual proof acceptance/rejection, all eight public-input mutations, malformed
+  proofs, replay, fresh high-chain context and 2/15/28-letter boundaries pass.
+  Real-proof creation measured 4,024,236 gas on local Anvil.
+- All six browser scenarios pass in 52.1 seconds. New fee cancellation and RPC
+  estimate-failure/recovery cases verify no wallet sends; every game action now
+  goes through review. Full outage recovery, wallet rejection/network/account
+  changes, reload, reveal/withdrawal and actual 28-letter proof creation pass.
+  Local inclusion explicitly shows no Ethereum L1 finality. Mobile fee review
+  fits at 375px; screenshot `/tmp/etherman-release-fee-mobile.png` was inspected.
+- Existing local UI at `http://127.0.0.1:5173/#create` loads with the visible text
+  word input and no page errors. Its existing contract/configuration is unchanged;
+  no persistent local redeployment is required for this frontend/tooling update.
+
+- 143 frontend tests and TypeScript pass. New cases cover call binding, mutable
+  caller arguments, account/network changes, cancellation during estimation,
+  stale/unavailable/increased fees, full signed-envelope size bounds, replacement
+  identity and reverts, local inclusion, unavailable finality, reorgs, contradictory
+  finalized/canonical hashes, and late results from an earlier transaction.
+- Frozen review candidate `release-hardening-v1` has 96 file hashes and source
+  SHA256 `9b54dcd8d53487a083f8fdb95589cc94229ba439a44cd2f457ec6cc733d17066`.
+  Review converged at **B1** with no new findings or objective blockers. Both
+  reviewers independently verified the prior wallet mismatch resolved, all 96
+  source hashes, 60 focused frontend tests and 14 release checks. The ledger is
+  [release-hardening-review.json](release-hardening-review.json). Changes remain
+  uncommitted. This is internal review, not external audit or mainnet approval.
+
 ## Reported-outage recovery candidate — November 10, 2026
 
 Work began from committed/pushed `fa4b339` on `codex/etherman-modernization`,

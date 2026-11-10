@@ -54,6 +54,15 @@ async function connect(page: Page) {
   await expect(page.getByRole('button', { name: /Disconnect wallet/ })).toBeVisible()
 }
 
+async function reviewAndContinue(page: Page, timeout = 10_000) {
+  await expect(page.getByText('Stake / transaction value', { exact: true })).toBeVisible({ timeout })
+  await expect(page.getByText('Estimated execution gas fee', { exact: true })).toBeVisible()
+  await expect(page.getByText('Not applicable on this network', { exact: true })).toBeVisible()
+  const proceed = page.getByRole('button', { name: 'Continue to wallet', exact: true })
+  await expect(proceed).toBeEnabled()
+  await proceed.click()
+}
+
 test('practice completes locally, prevents repeat guesses, and resets the round', async ({ page }) => {
   const submitted: string[] = []
   page.on('request', request => { if (request.postData()?.includes('eth_sendTransaction')) submitted.push(request.url()) })
@@ -89,6 +98,45 @@ test('mobile and desktop layouts remain within the viewport', async ({ page }) =
   }
 })
 
+test('fee review prevents submission on cancellation or unavailable estimates', async ({ page, request }) => {
+  const fixture: Fixture = await (await request.get('/__e2e-state')).json()
+  await wallet(page, fixture)
+  await page.setViewportSize({ width: 375, height: 900 })
+  await page.goto('/#game/1')
+  await connect(page)
+  const submitted: string[] = []
+  page.on('request', request => { if (request.postData()?.includes('eth_sendTransaction')) submitted.push(request.url()) })
+  const join = page.getByRole('button', { name: 'Join for 0.001 ETH' })
+  await expect(join).toBeEnabled()
+  await join.click()
+  await expect(page.getByRole('button', { name: 'Continue to wallet' })).toBeEnabled()
+  await expect(page.getByText('Stake / transaction value', { exact: true })).toBeVisible()
+  await expect(page.getByText('Estimated execution gas fee', { exact: true })).toBeVisible()
+  expect(submitted).toEqual([])
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: '/tmp/etherman-release-fee-mobile.png', fullPage: true })
+  await page.getByRole('button', { name: 'Cancel transaction', exact: true }).click()
+  await expect(join).toBeEnabled()
+  expect(submitted).toEqual([])
+  const rpcPattern = `${fixture.rpcUrl}/**`
+  const failEstimate = async (route: import('@playwright/test').Route) => {
+    const payload = route.request().postDataJSON()
+    if (payload?.method === 'eth_estimateGas') await route.fulfill({ json: { jsonrpc: '2.0', id: payload.id, error: { code: -32000, message: 'Estimate unavailable' } } })
+    else await route.continue()
+  }
+  await page.route(rpcPattern, failEstimate)
+  await join.click()
+  await expect(page.getByRole('button', { name: 'Refresh estimate', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Continue to wallet', exact: true })).toBeDisabled()
+  expect(submitted).toEqual([])
+  await page.unroute(rpcPattern, failEstimate)
+  await page.getByRole('button', { name: 'Refresh estimate', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Continue to wallet', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Cancel transaction', exact: true }).click()
+  expect(submitted).toEqual([])
+  await expect(join).toBeEnabled()
+})
+
 test('one-account wallet completes the game across outages, recovery, rejection, chain changes, and reload', async ({ page, request }) => {
   test.setTimeout(60_000)
   const fixture: Fixture = await (await request.get('/__e2e-state')).json()
@@ -99,6 +147,7 @@ test('one-account wallet completes the game across outages, recovery, rejection,
   await expect(join).toBeEnabled()
   await page.evaluate(() => (window as any).__testWallet.reject())
   await join.click()
+  await reviewAndContinue(page)
   await expect(page.getByRole('alert')).toContainText('Signature declined. No transaction was submitted.')
   await expect(join).toBeEnabled()
   await page.evaluate(() => (window as any).__testWallet.chain('0x1'))
@@ -106,8 +155,13 @@ test('one-account wallet completes the game across outages, recovery, rejection,
   await page.getByRole('button', { name: 'Switch network', exact: true }).click()
   await expect(join).toBeEnabled()
   await join.click()
+  await reviewAndContinue(page)
   await expect(page.getByRole('heading', { name: 'Your next letter?' })).toBeVisible()
+  await expect(page.getByText('Included on-chain', { exact: true })).toBeVisible()
+  await expect(page.locator('.transaction-notice')).not.toContainText('Confirmed on-chain')
+  await expect(page.locator('.transaction-finality')).toContainText('no Ethereum L1 finality')
   await page.getByRole('button', { name: 'c', exact: true }).click()
+  await reviewAndContinue(page)
   await expect(page.getByRole('heading', { name: 'Is there an “C”?' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submit letter positions' })).toHaveCount(0)
   await page.evaluate(() => (window as any).__testWallet.account(0))
@@ -144,6 +198,7 @@ test('one-account wallet completes the game across outages, recovery, rejection,
     await setDown(false)
     await expect(page.getByText(/^Network recovery detected\.?$/)).toBeVisible()
     await page.getByRole('button', { name: 'Start recovery grace period', exact: true }).click()
+    await reviewAndContinue(page)
     await expect(page.getByText(/^Recovery grace period\.?$/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Submit letter positions' })).toBeEnabled()
   } finally {
@@ -156,6 +211,7 @@ test('one-account wallet completes the game across outages, recovery, rejection,
   await expect(page.getByLabel('Your secret word (used locally to calculate positions)')).toHaveAttribute('type', 'text')
   await page.getByLabel('Your secret word (used locally to calculate positions)').fill('cat')
   await page.getByRole('button', { name: 'Submit letter positions' }).click()
+  await reviewAndContinue(page)
   await expect(page.getByRole('heading', { name: 'Waiting for a guess.' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Game #001.' })).toBeVisible()
@@ -164,16 +220,19 @@ test('one-account wallet completes the game across outages, recovery, rejection,
     await page.evaluate(() => (window as any).__testWallet.account(1))
     await expect(page.getByRole('heading', { name: 'Your next letter?' })).toBeVisible()
     await page.getByRole('button', { name: letter, exact: true }).click()
+    await reviewAndContinue(page)
     await expect(page.getByRole('heading', { name: `Is there an “${letter.toUpperCase()}”?` })).toBeVisible()
     await page.evaluate(() => (window as any).__testWallet.account(0))
     await expect(page.getByRole('button', { name: 'Submit letter positions' })).toBeEnabled()
     await page.getByLabel('Your secret word (used locally to calculate positions)').fill('cat')
     await page.getByRole('button', { name: 'Submit letter positions' }).click()
+    await reviewAndContinue(page)
     await expect(page.getByRole('heading', { name: letter === 'a' ? 'Waiting for a guess.' : 'Time to reveal.' })).toBeVisible()
   }
   await page.getByLabel('Original word', { exact: true }).fill(fixture.word)
   await page.getByLabel('Secret salt from your recovery file', { exact: true }).fill(fixture.salt)
   await page.getByRole('button', { name: 'Reveal answer & settle', exact: true }).click()
+  await reviewAndContinue(page)
   await expect(page.getByText('GAME SETTLED', { exact: true })).toBeVisible()
   await page.evaluate(() => (window as any).__testWallet.account(1))
   await expect(page.getByRole('heading', { name: 'This round is yours.' })).toBeVisible()
@@ -182,6 +241,7 @@ test('one-account wallet completes the game across outages, recovery, rejection,
   const readCredits = () => chain.readContract({ address: fixture.contract as `0x${string}`, abi: parseAbi(['function credits(address) view returns (uint256)']), functionName: 'credits', args: [fixture.accounts[1] as `0x${string}`] })
   expect(await readCredits()).toBe(2_000_000_000_000_000n)
   await page.getByRole('button', { name: 'Withdraw ETH', exact: true }).click()
+  await reviewAndContinue(page)
   await expect(page.getByText('READY TO WITHDRAW', { exact: true })).toHaveCount(0)
   expect(await readCredits()).toBe(0n)
   await expect(page.getByRole('button', { name: 'Withdraw ETH', exact: true })).toHaveCount(0)
@@ -221,6 +281,7 @@ test('creator must save recovery before staking and secrets stay out of storage 
   const sent: string[] = []
   page.on('request', req => { if (req.postData()?.includes('eth_sendTransaction')) sent.push(req.postData()!) })
   await submit.click()
+  await reviewAndContinue(page, 90_000)
   await expect(page.getByRole('heading', { name: 'Your challenge is waiting.' })).toBeVisible({ timeout: 90_000 })
   await page.setViewportSize({ width: 375, height: 900 })
   await expect(page.locator('.word-tiles').first().locator(':scope > span')).toHaveCount(28)

@@ -64,7 +64,7 @@ ETH only, and their keys must never be used for real funds.
 Anvil executes its own EVM: this rehearsal does not reproduce Scroll's prover,
 sequencer, finality, opcode differences, or complete L1 data fees. Native Scroll
 execution and fee validation remain release gates. The private dictionary-membership proof is implemented and tested locally.
-Outage-safe timeout design remains outstanding.
+Reported-outage recovery is implemented; its external-feed and delivery limits remain release considerations.
 
 Run the twelve gameplay integration scenarios against a disposable Scroll state
 fork with `npm run test:integration:scroll`. The command rebuilds the contract,
@@ -85,12 +85,16 @@ read-only RPC requests; the ordinary `test:integration` command stays local.
 
 The proof is generated in a browser worker after you save the recovery file. It takes CPU and memory and can be cancelled before wallet submission. A commitment cannot be reused, even after cancellation. See [proof design and benchmarks](docs/dictionary-proof.md) for the accepted vocabulary, trust assumptions, and performance limits.
 
+Before each transaction, review the stake separately from estimated network fees, then continue to your wallet. Inclusion and finality are shown separately. See [release hardening](docs/release-hardening.md) for artifact checks and estimate/finality limits.
+
 Full transition rules and interfaces: [protocol](docs/protocol.md). Threat model and remaining release work: [security](docs/security.md), [release checklist](docs/release.md).
 
 ## Development and verification
 
 ```sh
 npm run proof:build        # reproduce dictionary tree, circuit, verifier, and browser assets
+npm run release:verify     # verify built artifacts against the reviewed release manifest
+npm run test:release       # local deployment guards, artifact tampering and actual bundle checks
 npm run test:outage        # real-proof outage, recovery, settlement and withdrawal flows
 npm run test:outage:scroll # local fork plus actual official Scroll uptime proxy
 npm run test:proof         # actual ZK proofs, Solidity verifier, altered-input and replay tests
@@ -105,7 +109,7 @@ npm audit                 # root dependency advisories
 
 Foundry binaries are pinned npm dependencies. Its first test run may download the pinned native Solidity compiler. The project wrapper propagates native test failure exit codes. `solc`'s `tmp` dependency is overridden to patched `0.2.7`; do not remove this override until upstream fixes the pin. Install scripts are not needed when the supported platform's optional Foundry binaries are installed.
 
-`npm run check` runs build, frontend, contract, actual-proof, and local-chain integration checks. Run `proof:build` first after a fresh checkout or a circuit/dictionary/toolchain change; it creates ignored assets under `public/zk/`. The first proving run fetches public CRS parameters from the backend's fixed CDN endpoints. It does not send the word, salt, or witness. Browser tests are a separate explicit command. Tests and scripts only use disposable/local chains; they never broadcast to mainnet or Sepolia.
+`npm run check` runs build, release safeguards, frontend, contract, actual-proof, and local-chain integration checks. Normal builds do not update the trusted release manifest; see [release hardening](docs/release-hardening.md) for intentional manifest updates. Run `proof:build` first after a fresh checkout or a circuit/dictionary/toolchain change; it creates ignored assets under `public/zk/`. The first proving run fetches public CRS parameters from the backend's fixed CDN endpoints. It does not send the word, salt, or witness. Browser tests are a separate explicit command. Tests and scripts only use disposable/local chains; they never broadcast to mainnet or Sepolia.
 
 ## Layout
 

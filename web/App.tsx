@@ -74,6 +74,7 @@ import {
   dictionaryErrors,
   type DictionaryProgress,
 } from "./dictionary";
+import { quoteIsStale } from "./fees";
 
 function Hangman({
   misses = 0,
@@ -236,20 +237,30 @@ function WalletControl() {
     </div>
   );
 }
-function TransactionNotice() {
-  const { state, clear, busy } = useTransaction();
+export function TransactionNotice() {
+  const { state, clear, busy, reviewDecision } = useTransaction();
+  useClock();
   if (state.phase === "idle") return null;
   const explorer = targetChain.blockExplorers?.default.url;
+  const review = state.review;
+  const stale = !!review?.quote && quoteIsStale(review.quote);
   return (
     <aside
       className={`transaction-notice ${state.phase}`}
-      role={state.phase === "error" ? "alert" : "status"}
+      role={
+        state.phase === "review"
+          ? "dialog"
+          : state.phase === "error"
+            ? "alert"
+            : "status"
+      }
+      aria-label={state.phase === "review" ? "Transaction review" : undefined}
       aria-live="polite"
     >
       <div className="transaction-icon">
         {busy ? (
           <LoaderCircle className="spin" size={21} />
-        ) : state.phase === "success" ? (
+        ) : state.phase === "included" ? (
           <Check size={21} />
         ) : (
           <CircleHelp size={21} />
@@ -258,6 +269,92 @@ function TransactionNotice() {
       <div>
         <strong>{state.label}</strong>
         <p>{state.message}</p>
+        {state.phase === "review" && review && (
+          <>
+            <dl className="transaction-fees">
+              <div>
+                <dt>Network</dt>
+                <dd>{targetChain.name}</dd>
+              </div>
+              <div>
+                <dt>Signing wallet</dt>
+                <dd className="mono">{review.account}</dd>
+              </div>
+              <div>
+                <dt>Contract</dt>
+                <dd className="mono">{review.contract}</dd>
+              </div>
+              <div>
+                <dt>Stake / transaction value</dt>
+                <dd>{eth(review.value)} ETH</dd>
+              </div>
+              <div>
+                <dt>Estimated execution gas fee</dt>
+                <dd>
+                  {review.quote
+                    ? `${eth(review.quote.executionFee)} ETH`
+                    : "Unavailable"}
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  {review.quote?.l1DataFee !== undefined
+                    ? "Scroll L1 data fee upper bound"
+                    : "L1 data fee"}
+                </dt>
+                <dd>
+                  {review.chainId === 534352 || review.chainId === 534351
+                    ? review.quote?.l1DataFee !== undefined
+                      ? `${eth(review.quote.l1DataFee)} ETH`
+                      : "Unavailable"
+                    : "Not applicable on this network"}
+                </dd>
+              </div>
+            </dl>
+            <p>
+              {review.feeStatus === "refreshing"
+                ? "Estimating fees…"
+                : stale
+                  ? "Estimate stale. Refresh to continue."
+                  : review.quote
+                    ? "Estimate ready. Fees will be checked again before requesting a signature."
+                    : "Fee estimate unavailable."}
+            </p>
+            <p>
+              Execution estimate includes a gas allowance buffer. These amounts
+              are estimates at current prices, not a future fee cap. Wallet
+              edits, replacement transactions, and price changes can alter the
+              cost.
+            </p>
+            <div className="transaction-review-actions">
+              <button
+                className="button small"
+                disabled={review.feeStatus !== "ready" || stale}
+                onClick={() => reviewDecision("continue")}
+              >
+                Continue to wallet
+              </button>
+              <button
+                className="button secondary small"
+                disabled={review.feeStatus === "refreshing"}
+                onClick={() => reviewDecision("refresh")}
+              >
+                Refresh estimate
+              </button>
+              <button
+                className="text-button"
+                onClick={() => reviewDecision("cancel")}
+              >
+                Cancel transaction
+              </button>
+            </div>
+          </>
+        )}
+        {state.finality && (
+          <p className="transaction-finality">
+            Finality: {state.finality.message}
+          </p>
+        )}
         {state.hash &&
           (explorer ? (
             <a

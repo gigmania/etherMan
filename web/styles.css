@@ -2451,3 +2451,37 @@ dd {
     scroll-behavior: auto !important;
   }
 }
+
+.transaction-notice.review {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}
+.transaction-fees {
+  margin: 14px 0;
+}
+.transaction-fees > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 18px;
+  margin: 8px 0;
+}
+.transaction-fees dt {
+  color: var(--muted);
+}
+.transaction-fees dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.transaction-review-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.transaction-finality {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}

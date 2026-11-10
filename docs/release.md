@@ -19,8 +19,10 @@ compiler output and implemented dictionary verifier there.
 
 The read-only verifier and complete-game fee assessment is recorded in
 [`scroll-assessment.md`](scroll-assessment.md); it does not establish transaction
-inclusion or rollup finalization. Before launch, validate live complete-game fees, distinguish
-L2 inclusion from L1 finality in the UI, and accept the reported-outage recovery policy and its external feed/delivery
+inclusion or rollup finalization. The [release-hardening candidate](release-hardening.md)
+adds pre-sign fee review, separate inclusion/finality observations, and pinned
+local deployment checks. Before launch, validate these against live complete-game
+fees and finality, and accept the reported-outage recovery policy and its external feed/delivery
 limits. The candidate implements permissionless 24-hour recovery grace; see
 [outage handling](outage-handling.md). Dictionary enforcement is implemented in the local candidate, but is not
 publicly deployed or externally audited. The fixed 274,137-word vocabulary comes

@@ -15,11 +15,15 @@ const mocks = vi.hoisted(() => ({
   contract: "0x2222222222222222222222222222222222222222",
   originalHash: `0x${"11".repeat(32)}`,
   replacementHash: `0x${"22".repeat(32)}`,
+  args: [7n],
   publicClient: {
     getChainId: vi.fn(),
     getCode: vi.fn(),
     readContract: vi.fn(),
     getBlockNumber: vi.fn(),
+    getBlock: vi.fn(),
+    estimateGas: vi.fn(),
+    getGasPrice: vi.fn(),
     simulateContract: vi.fn(),
     waitForTransactionReceipt: vi.fn(),
     getTransaction: vi.fn(),
@@ -74,7 +78,7 @@ function Harness({ complete }: { complete: (result: unknown) => void }) {
       <button
         disabled={!deployment.data}
         onClick={async () =>
-          complete(await tx.run("Join game", "joinGame", [7n], 123n))
+          complete(await tx.run("Join game", "joinGame", mocks.args, 123n))
         }
       >
         Submit
@@ -82,6 +86,24 @@ function Harness({ complete }: { complete: (result: unknown) => void }) {
       <output data-testid="phase">{tx.state.phase}</output>
       <output data-testid="hash">{tx.state.hash}</output>
       <output data-testid="message">{tx.state.message}</output>
+      <output data-testid="finality">{tx.state.finality?.status}</output>
+      <output data-testid="fee-status">{tx.state.review?.feeStatus}</output>
+      {tx.state.phase === "review" && (
+        <>
+          <button
+            disabled={tx.state.review?.feeStatus !== "ready"}
+            onClick={() => tx.reviewDecision("continue")}
+          >
+            Continue to wallet
+          </button>
+          <button onClick={() => tx.reviewDecision("refresh")}>
+            Refresh estimate
+          </button>
+          <button onClick={() => tx.reviewDecision("cancel")}>
+            Cancel transaction
+          </button>
+        </>
+      )}
     </>
   );
 }
@@ -100,7 +122,7 @@ function mount() {
   );
   return { complete, invalidate };
 }
-async function submit() {
+async function submit(autoReview = true) {
   await waitFor(() =>
     expect(
       (screen.getByRole("button", { name: "Submit" }) as HTMLButtonElement)
@@ -108,16 +130,40 @@ async function submit() {
     ).toBe(false),
   );
   fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+  await waitFor(() =>
+    expect(["review", "error"]).toContain(
+      screen.getByTestId("phase").textContent,
+    ),
+  );
+  if (autoReview && screen.getByTestId("phase").textContent === "review") {
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+  }
 }
 function receipt(hash = mocks.originalHash, status = "success") {
-  return { transactionHash: hash, status, logs: [] };
+  return {
+    transactionHash: hash,
+    status,
+    logs: [],
+    blockNumber: 88n,
+    blockHash: `0x${"33".repeat(32)}`,
+  };
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.args = [7n];
   mocks.publicClient.getChainId.mockResolvedValue(31337);
   mocks.publicClient.getCode.mockResolvedValue("0x6000");
   mocks.publicClient.readContract.mockResolvedValue(1n);
   mocks.publicClient.getBlockNumber.mockResolvedValue(88n);
+  mocks.publicClient.getBlock.mockResolvedValue({
+    hash: receipt().blockHash,
+    number: 88n,
+  });
+  mocks.publicClient.estimateGas.mockReset().mockResolvedValue(100_000n);
+  mocks.publicClient.getGasPrice.mockReset().mockResolvedValue(1_000_000_000n);
   mocks.publicClient.simulateContract.mockResolvedValue({ request: {} });
   mocks.publicClient.waitForTransactionReceipt.mockResolvedValue(receipt());
   mocks.publicClient.getTransaction.mockResolvedValue(intended());
@@ -132,7 +178,7 @@ describe("confirmed transaction identity", () => {
     const { complete, invalidate } = mount();
     await submit();
     await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
-    expect(screen.getByTestId("phase").textContent).toBe("success");
+    expect(screen.getByTestId("phase").textContent).toBe("included");
     expect(screen.getByTestId("hash").textContent).toBe(mocks.originalHash);
     expect(mocks.publicClient.getTransaction).toHaveBeenCalledWith({
       hash: mocks.originalHash,
@@ -150,7 +196,7 @@ describe("confirmed transaction identity", () => {
     const { complete } = mount();
     await submit();
     await waitFor(() => expect(complete).toHaveBeenCalledWith(replacement));
-    expect(screen.getByTestId("phase").textContent).toBe("success");
+    expect(screen.getByTestId("phase").textContent).toBe("included");
     expect(screen.getByTestId("hash").textContent).toBe(mocks.replacementHash);
     expect(mocks.publicClient.getTransaction).toHaveBeenCalledWith({
       hash: mocks.replacementHash,
@@ -457,4 +503,226 @@ describe("safe network transaction errors", () => {
       expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("transaction review", () => {
+  it("never asks for a signature until reviewed and re-estimates before signing", async () => {
+    const { complete } = mount();
+    await submit(false);
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    expect(mocks.publicClient.estimateGas).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+    expect(mocks.publicClient.estimateGas).toHaveBeenCalledTimes(2);
+    expect(mocks.wallet.writeContract).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: mocks.contract,
+        account: mocks.account,
+        functionName: "joinGame",
+        args: [7n],
+        value: 123n,
+        type: "legacy",
+        gas: 130000n,
+        gasPrice: 1000000000n,
+      }),
+    );
+  });
+  it("cancels review without submitting", async () => {
+    const { complete } = mount();
+    await submit(false);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel transaction" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(undefined));
+    expect(screen.getByTestId("phase").textContent).toBe("cancelled");
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+  });
+  it("cancels a pending estimate and ignores its later completion", async () => {
+    let resolveEstimate!: (value: bigint) => void;
+    mocks.publicClient.estimateGas.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveEstimate = resolve;
+        }),
+    );
+    const { complete } = mount();
+    await submit(false);
+    expect(screen.getByTestId("fee-status").textContent).toBe("refreshing");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel transaction" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(undefined));
+    resolveEstimate(100000n);
+    await waitFor(() =>
+      expect(screen.getByTestId("phase").textContent).toBe("cancelled"),
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+  });
+  it("disables signing when estimates fail and recovers through explicit refresh", async () => {
+    mocks.publicClient.estimateGas.mockRejectedValueOnce(
+      new Error("privateword secret-salt"),
+    );
+    const { complete } = mount();
+    await submit(false);
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("unavailable"),
+    );
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Continue to wallet",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(screen.getByTestId("message").textContent).toContain(
+      "Fee estimate unavailable",
+    );
+    expect(screen.getByTestId("message").textContent).not.toContain(
+      "privateword",
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh estimate" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+  });
+  it("rejects stale reviews until explicitly refreshed", async () => {
+    const { complete } = mount();
+    await submit(false);
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    const time = Date.now() + 30001;
+    vi.spyOn(Date, "now").mockReturnValue(time);
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("message").textContent).toContain("stale"),
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh estimate" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+  });
+  it("returns to review if fresh fees increase or become unavailable", async () => {
+    const { complete } = mount();
+    await submit(false);
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    mocks.publicClient.getGasPrice.mockResolvedValue(2000000000n);
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("message").textContent).toContain(
+        "changed or expired",
+      ),
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    mocks.publicClient.getGasPrice.mockRejectedValueOnce(
+      new Error("RPC failure"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("unavailable"),
+    );
+    expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel transaction" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(undefined));
+  });
+  it.each(["account", "network"])(
+    "rejects a wallet %s change during review",
+    async (change) => {
+      const { complete } = mount();
+      await submit(false);
+      await waitFor(() =>
+        expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+      );
+      if (change === "account")
+        mocks.wallet.getAddresses.mockResolvedValue([mocks.contract]);
+      else mocks.wallet.getChainId.mockResolvedValue(1);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Continue to wallet" }),
+      );
+      await waitFor(() => expect(complete).toHaveBeenCalledWith(undefined));
+      expect(screen.getByTestId("message").textContent).toContain(
+        "wallet account or network changed",
+      );
+      expect(mocks.wallet.writeContract).not.toHaveBeenCalled();
+    },
+  );
+  it("snapshots the reviewed call even if the caller later mutates its args", async () => {
+    const { complete } = mount();
+    await submit(false);
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    mocks.args[0] = 999n;
+    fireEvent.click(screen.getByRole("button", { name: "Continue to wallet" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+    expect(mocks.wallet.writeContract.mock.calls[0][0].args).toEqual([7n]);
+  });
+});
+
+describe("inclusion and finality observations", () => {
+  it("returns an included receipt without claiming Ethereum finality locally", async () => {
+    const { complete } = mount();
+    await submit();
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+    await waitFor(() =>
+      expect(screen.getByTestId("finality").textContent).toBe("local"),
+    );
+    expect(screen.getByTestId("message").textContent).toBe("Included on-chain");
+  });
+  it("keeps finality explicitly unknown when the RPC fails", async () => {
+    mocks.publicClient.getBlock.mockRejectedValue(
+      new Error("RPC failure privateword"),
+    );
+    const { complete } = mount();
+    await submit();
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+    await waitFor(() =>
+      expect(screen.getByTestId("finality").textContent).toBe("unknown"),
+    );
+    expect(screen.getByTestId("phase").textContent).toBe("included");
+  });
+  it("replaces the included state with a reorg warning and refreshes game reads", async () => {
+    mocks.publicClient.getBlock.mockResolvedValue({
+      hash: mocks.replacementHash,
+      number: 88n,
+    });
+    const { invalidate } = mount();
+    await submit();
+    await waitFor(() =>
+      expect(screen.getByTestId("finality").textContent).toBe("reorg"),
+    );
+    expect(screen.getByTestId("phase").textContent).toBe("error");
+    expect(screen.getByTestId("message").textContent).toContain(
+      "no longer canonical",
+    );
+    expect(invalidate).toHaveBeenCalledTimes(2);
+  });
+  it("does not let a late finality result replace a newer transaction review", async () => {
+    let resolveBlock!: (value: unknown) => void;
+    mocks.publicClient.getBlock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveBlock = resolve;
+        }),
+    );
+    const { complete } = mount();
+    await submit();
+    await waitFor(() => expect(complete).toHaveBeenCalledWith(receipt()));
+    await waitFor(() => expect(mocks.publicClient.getBlock).toHaveBeenCalled());
+    await submit(false);
+    resolveBlock({ hash: mocks.replacementHash, number: 88n });
+    await waitFor(() =>
+      expect(screen.getByTestId("fee-status").textContent).toBe("ready"),
+    );
+    expect(screen.getByTestId("phase").textContent).toBe("review");
+    expect(screen.getByTestId("finality").textContent).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel transaction" }));
+  });
 });
