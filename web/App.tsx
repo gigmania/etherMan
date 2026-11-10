@@ -703,7 +703,7 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
   const dictionary = useDictionaryRoot();
   const root = dictionary.data;
   const [word, setWord] = useState("");
-  const [showWord, setShowWord] = useState(false);
+  const [showWord, setShowWord] = useState(true);
   const [stake, setStake] = useState("0.001");
   const [misses, setMisses] = useState(6);
   const [recovery, setRecovery] = useState<Recovery>();
@@ -927,11 +927,12 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
             <div className="secret-word-input">
               <input
                 id="secret-word"
-                type={showWord ? "text" : "password"}
-                autoComplete="new-password"
+                type="text"
+                name="game-word"
+                autoComplete="off"
+                data-masked={!showWord}
                 autoCapitalize="none"
                 spellCheck={false}
-                maxLength={12}
                 value={word}
                 onChange={(e) => setWord(e.target.value)}
                 placeholder="A word worth guessing"
@@ -947,7 +948,7 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
               </button>
             </div>
             <p id="word-hint">
-              3–12 lowercase letters from the game dictionary. Your browser
+              Choose a lowercase word from the game dictionary. Your browser
               proves membership without revealing the word.
             </p>
           </div>
@@ -1075,10 +1076,7 @@ export function CreateGame({ remember }: { remember: (r: Recovery) => void }) {
         <aside className="create-aside">
           <div className="panel illustration-panel">
             <Hangman decorative />
-            <WordTiles
-              letters={Array(Math.max(3, word.length)).fill("")}
-              small
-            />
+            <WordTiles letters={Array(word.length || 2).fill("")} small />
           </div>
           <div className="aside-note">
             <ShieldCheck size={21} />
@@ -1543,8 +1541,10 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
                     </label>
                     <input
                       id="response-word"
-                      type="password"
+                      name="response-game-word"
+                      type="text"
                       autoComplete="off"
+                      spellCheck={false}
                       value={word}
                       onChange={(e) => setWord(e.target.value)}
                       placeholder="Enter your original word"
@@ -1570,7 +1570,7 @@ export function GameView({ id, secret }: { id: bigint; secret?: Recovery }) {
                             key={i}
                             aria-pressed={!!(selectedMask & (1 << i))}
                             onClick={() =>
-                              setSelectedMask(selectedMask ^ (1 << i))
+                              setSelectedMask((selectedMask ^ (1 << i)) >>> 0)
                             }
                           >
                             {i + 1}
@@ -1765,7 +1765,7 @@ function Rules() {
         [
           "01",
           "Create & keep your secret",
-          "Choose a word of 3–12 lowercase letters from the game dictionary and 1–8 allowed misses. Your browser privately proves dictionary membership, and the contract checks that proof before opening the game. Download your recovery file before creating the game. It contains the word and salt needed to reveal. Keep it private and backed up; losing it can cost your stake.",
+          "Choose a lowercase word from the game dictionary and 1–8 allowed misses. Your browser privately proves dictionary membership, and the contract checks that proof before opening the game. Download your recovery file before creating the game. It contains the word and salt needed to reveal. Keep it private and backed up; losing it can cost your stake.",
         ],
         [
           "02",

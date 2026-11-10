@@ -1,10 +1,11 @@
 {
-  "dictionaryId": "etherman-english-v1",
-  "depth": 18,
-  "wordCount": 240784,
-  "root": "0x05fcbf411422255acdd1c2a9caeb9a036cc26674c64767801a22ba8fc7ea1e7a",
-  "wordsSha256": "fa4d2310bcc2595705cd555be0ccdb73b390877dc670bcc8c3172f905112a7a9",
-  "treeSha256": "c7b312539c953c296966e9ce032e31e3e187219dd1359dd45354f18a0f1fdc90",
-  "hash": "Barretenberg Poseidon2 BN254 sponge; leaf H(1,length,word96be); node H(2,left,right)",
-  "layout": "32-byte big-endian fields; binary heap root at index 1, leaves at 2^18; absent leaves H(1,0,0)"
+  "dictionaryId": "etherman-english-v2",
+  "depth": 19,
+  "maxWordLength": 28,
+  "wordCount": 274137,
+  "root": "0x0fea52e1ba879dc3a2cc1a773bd49a5f8ab16b38580ed458bd6bf9c9731af53b",
+  "wordsSha256": "b731019f3cbd2628a4a4f4463ffd75ec9d03d8bf587ff91c6220f5defd720c25",
+  "treeSha256": "441fa8ddc375337f2e18f793c87dac6cb1cc3480e21a7fde998f93b3d1461079",
+  "hash": "Barretenberg Poseidon2 BN254 sponge; leaf H(1,length,word224be); node H(2,left,right)",
+  "layout": "32-byte big-endian fields; binary heap root at index 1, leaves at 2^19; absent leaves H(1,0,0)"
 }

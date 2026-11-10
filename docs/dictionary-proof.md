@@ -8,7 +8,7 @@ This is a high-risk cryptographic change under the engineering-team workflow.
 
 ## Acceptance criteria
 
-- Creating a game requires proof of an allowed 3–12-byte lowercase word, without
+- Creating a game requires proof of an allowed lowercase dictionary word, without
   revealing the word, salt, dictionary leaf, path, or index before ordinary reveal.
 - The proof is bound to the chain, game contract, creator, word length, existing
   Keccak commitment, and immutable dictionary root. Callers cannot supply their
@@ -23,13 +23,13 @@ This is a high-risk cryptographic change under the engineering-team workflow.
 ## Frozen vocabulary and circuit
 
 `dictionary/manifest.json` identifies word-list 4.1.0 and its upstream Letterpress
-source, licenses, normalization, and hashes. There are 240,784 words. This is a
+source, licenses, normalization, and hashes. There are 274,137 words. This is a
 specific game vocabulary, with regional spellings and obscure inflections;
 absence does not prove a word is not English. MIT and CC0 notices are retained
 and copied into the browser assets. No vocabulary server/oracle is consulted.
 
-The depth-18 tree has 262,144 leaves. A word is packed big-endian into twelve
-bytes, zero-padded on the right. Leaves use Poseidon2 H(1,length,packedWord96),
+The depth-19 tree has 524,288 leaves. A word is packed big-endian into twenty-eight
+bytes, zero-padded on the right. Leaves use Poseidon2 H(1,length,packedWord224),
 internal nodes H(2,left,right), and missing leaves H(1,0,0). The circuit constrains
 length, ASCII range, zero padding, and every direction bit. The exact root and
 binary tree hash are in `dictionary/tree-manifest.json`. There is no root setter;
@@ -42,6 +42,12 @@ bits. The circuit range-checks the limbs and addresses rather than reducing a
 The existing commitment remains Keccak-256 of the exact 224-byte Solidity
 `abi.encode(chainId,contract,creator,word,salt)` representation. Recovery v1 and
 reveal encoding stay unchanged.
+
+The source dictionary now determines capacity: all 274,137 lowercase entries
+are included, ranging from 2 to 28 letters. Generated Noir, TypeScript and
+Solidity constants agree on capacity. The build derives proof size by generating
+and verifying a synthetic longest-word proof with the exact pinned backend.
+The 224-byte Keccak ABI encoding is unchanged. uint32 masks cover all positions.
 
 ## Proving and deployment trust
 
@@ -70,7 +76,8 @@ There is no mock-verifier option in the deployment helpers.
 
 ## Benchmarks and limits
 
-Initial measurements on this development machine, single-threaded WASM:
+Historical v1 measurements on this development machine, single-threaded WASM
+(the v2 results are recorded in `verification.md`):
 
 | Measurement | Result |
 | --- | --- |
@@ -101,8 +108,9 @@ Foundry mocks isolate state-machine and boundary tests. Browser tests cover
 proof generation and creation plus stale/cancelled attempts.
 
 Local rollout needs a fresh deployment/address and updated `.env.local`. Old
-recovery files and gameplay access must not acquire dictionary checks; only new
-creation does. Rollback is restoring the earlier candidate and its deployment
+recovery files retain their encoding; only new creation uses membership checks.
+Because the response selector widened from uint16 to uint32, old contracts must
+retain their previous UI/ABI and deployment configuration (v1: `23f32a3`). Rollback is restoring the earlier candidate and its deployment
 configuration, not migrating or modifying existing on-chain funds. Generated
 artifacts must be rebuilt together; mixing a circuit, VK, verifier or manifest
 from different versions should fail closed.

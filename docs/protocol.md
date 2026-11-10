@@ -6,7 +6,7 @@ The v1 contracts and artifacts are historical source, not part of the v2 build.
 ## Rules and trust assumptions
 
 Two players escrow the same positive ETH stake, at most 1 ETH per player. The
-creator chooses a 3–12-letter lowercase ASCII word from the fixed game dictionary
+creator chooses a lowercase ASCII word from the fixed game dictionary
 and 1–8 allowed misses. A private dictionary-membership proof is required when
 creating the game. Guesses are single letters, each used at most once.
 The creator must answer every turn and ultimately reveal the word and its random
@@ -41,17 +41,17 @@ provide a fair random word distribution.
 
 ## Private dictionary membership
 
-The initial vocabulary contains 240,784 words, normalized from `word-list@4.1.0`
-to unique ASCII lowercase entries of length 3–12, sorted in ASCII order. The
+The initial vocabulary contains 274,137 words, normalized from `word-list@4.1.0`
+to all unique ASCII lowercase entries, without a length filter, sorted in ASCII order. The
 package carries MIT terms and its Letterpress source carries CC0-1.0 terms;
 source identities, normalization rules, hashes, and notices are retained in
 [`dictionary/`](../dictionary/README.md). Membership means inclusion in this exact
 vocabulary, not a universal judgment of English validity. Regional spellings and
 obscure inflections may appear, and names or newer terms may be absent.
 
-A depth-18 Poseidon2 Merkle tree commits to the vocabulary. The leaf is
-`H(1, length, packedWord96)` and an internal node is `H(2, left, right)`. The packed
-word contains its ASCII bytes followed by zero padding to twelve bytes. Empty
+A depth-19 Poseidon2 Merkle tree commits to the vocabulary. The leaf is
+`H(1, length, packedWord224)` and an internal node is `H(2, left, right)`. The packed
+word contains its ASCII bytes followed by zero padding to twenty-eight bytes. Empty
 leaves use `H(1, 0, 0)` and cannot satisfy the circuit's valid-word constraints.
 The generated tree manifest records the exact root and binary layout.
 
@@ -114,7 +114,7 @@ unused ID. Terms of a created game are immutable.
 
 - `joinGame(uint256 gameId)` payable, exact stake required.
 - `guess(uint256 gameId, uint8 letter)` uses a=0 through z=25.
-- `respond(uint256 gameId, uint8 expectedLetter, uint16 mask)` submits the creator's
+- `respond(uint256 gameId, uint8 expectedLetter, uint32 mask)` submits the creator's
   answer for that letter (a=0 through z=25). The expected letter must match the
   current unanswered guess. A delayed or retried response cannot apply to a later
   turn, even if the previous and current responses both have a zero mask.
@@ -127,11 +127,11 @@ unused ID. Terms of a created game are immutable.
   commitment for this chain and contract.
 - `getGame(uint256 gameId)` returns the `Game` struct, reverting for nonexistent IDs.
 - `getGuesses(uint256 gameId)` returns parallel arrays of **completed responses**:
-  `uint8[] letters` and `uint16[] masks`. The unanswered guess is in `pendingLetter`.
+  `uint8[] letters` and `uint32[] masks`. The unanswered guess is in `pendingLetter`.
 
 `Game` fields in order: `address creator`, `address challenger`, `bytes32
 commitment`, `uint256 stake`, `uint256 deadline`, `uint8 wordLength`, `uint8
-maxMisses`, `uint8 misses`, `uint32 guessedLetters`, `uint16 revealedMask`, `uint8
+maxMisses`, `uint8 misses`, `uint32 guessedLetters`, `uint32 revealedMask`, `uint8
 pendingLetter`, `State state`, `address winner`, `string finalWord`.
 `pendingLetter=26` means none. `guessedLetters` is a letter bitset. `revealedMask`
 is the union of response masks. `finalWord` is populated only after a matching
@@ -169,3 +169,15 @@ Before mainnet: review word/game rules and fee economics, measure gas for the
 complete two-player lifecycle, independently audit contracts and secret handling,
 verify compiler/build provenance, rehearse deadline and recovery UX, determine
 whether legacy funds exist, and approve a concrete deployment/migration plan.
+
+## Vocabulary v2 compatibility
+
+The build derives circuit/tree capacity from the pinned full vocabulary (currently
+2–28 letters). Creation has no HTML length cap; membership decides eligibility.
+The encoding builder fails explicitly above 31 bytes, where the packed-field and
+32-bit-mask design would need revision, rather than silently dropping words.
+
+Position masks are now uint32. The `respond` and response-event signatures change
+from v1, so a fresh contract and its matching ABI/UI are required. Existing games
+stay on their old contracts and must use the previous UI/ABI (commit `23f32a3` for
+dictionary v1). Keccak commitments and recovery-file version 1 are unchanged.

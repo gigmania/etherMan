@@ -17,10 +17,12 @@ compatibility or live-network fee behavior. Before a public deployment, establis
 a maintained Scroll-native rehearsal environment and validate the actual
 compiler output and implemented dictionary verifier there.
 
-Before launch, measure complete-game costs including L1 data fees, distinguish
+The read-only verifier and complete-game fee assessment is recorded in
+[`scroll-assessment.md`](scroll-assessment.md); it does not establish transaction
+inclusion or rollup finalization. Before launch, validate live complete-game fees, distinguish
 L2 inclusion from L1 finality in the UI, and resolve outage handling for 24-hour
 turns. Dictionary enforcement is implemented in the local candidate, but is not
-publicly deployed or externally audited. The fixed 240,784-word vocabulary comes
+publicly deployed or externally audited. The fixed 274,137-word vocabulary comes
 from `word-list@4.1.0` with MIT/CC0-1.0 provenance retained in `dictionary/`.
 The constructor fixes the root and verifier; neither can be updated by an admin.
 A vocabulary, circuit, or verifier change requires a new deployment.
@@ -33,7 +35,7 @@ Record browser time/memory and actual Scroll execution/data fees before launch.
 ## Before testnet
 
 1. Confirm whether any legacy deployment exists, its network/address, deployed bytecode, ownership, balance and active users. The user believes the original app was testnet-only, so a fresh deployment is the working assumption; no address has been supplied to verify it. Repository metadata only records network 4447 and does not prove that other deployments do not exist.
-2. Approve the candidate rules: interactive creator, 24-hour turns, seven-day expiry, 3–12 lowercase letters, 1–8 misses, maximum 1 ETH stake, zero fee, private dictionary-proof enforcement, permanent commitment consumption, no administrator or upgrade proxy. Keep the current salted Keccak commitment and version-1 recovery format; existing games remain tied to their original contracts.
+2. Approve the candidate rules: interactive creator, 24-hour turns, seven-day expiry, a dictionary word in lowercase letters, 1–8 misses, maximum 1 ETH stake, zero fee, private dictionary-proof enforcement, permanent commitment consumption, no administrator or upgrade proxy. Keep the current salted Keccak commitment and version-1 recovery format; existing games remain tied to their original contracts.
 3. Complete the automated checks and independent code/security review on a fixed source revision. Record compiler, optimizer, EVM target, ABI, runtime bytecode, circuit, verification key, linked verifier libraries, dictionary/root, proving assets and dependency lockfile hashes. Verify zero-knowledge mode and proving-parameter provenance. Mock-verifier tests alone do not establish cryptographic validity.
 4. Measure creation, per-letter response, worst-case reveal, timeout and withdrawal gas. Present expected complete-game transaction costs.
 5. Identify a maintained rehearsal environment for Scroll before preparing a public test deployment transaction, deployment owner, RPC, explorer verification, addresses and frontend configuration for approval. Ethereum Sepolia support in the current frontend is not a Scroll rehearsal. Do not place secrets in `VITE_*` variables: they are public browser configuration.

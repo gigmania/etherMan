@@ -1008,6 +1008,9 @@ input::placeholder {
 .secret-word-input input {
   padding-right: 100px;
 }
+.secret-word-input input[data-masked="true"] {
+  -webkit-text-security: disc;
+}
 .word-visibility-toggle {
   position: absolute;
   top: 0;

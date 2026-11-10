@@ -14,6 +14,14 @@ it("checks dictionary membership locally after one whole-list download", async (
   const { checkDictionaryWord } = await import("./dictionary-assets");
   await checkDictionaryWord("ether", proverManifest.root);
   await checkDictionaryWord("cat", proverManifest.root);
+  await checkDictionaryWord("ab", proverManifest.root);
+  await checkDictionaryWord(
+    "ethylenediaminetetraacetates",
+    proverManifest.root,
+  );
+  await expect(
+    checkDictionaryWord("a".repeat(29), proverManifest.root),
+  ).rejects.toThrow("game's English dictionary");
   await expect(
     checkDictionaryWord("zzzzzzzz", proverManifest.root),
   ).rejects.toThrow("game's English dictionary");

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import net from 'node:net'
 import { pathToFileURL } from 'node:url'
-import { createPublicClient, createWalletClient, encodeAbiParameters, http, keccak256, parseEther, toHex, TransactionReceiptNotFoundError } from 'viem'
+import { createPublicClient, createWalletClient, encodeAbiParameters, encodeFunctionData, http, keccak256, parseEther, toHex, TransactionReceiptNotFoundError } from 'viem'
 import { foundry } from 'viem/chains'
 import { foundryBinary } from './foundry.mjs'
 import { deployBundle } from './deploy-bundle.mjs'
@@ -43,7 +43,7 @@ export async function startChain({ scrollFork = false } = {}) {
     await exited
     clearTimeout(force)
   }
-  const client = createPublicClient({ chain: foundry, transport: http(url, { retryCount: 0, timeout: scrollFork ? 15000 : 1000 }), pollingInterval: 50 })
+  const client = createPublicClient({ chain: foundry, transport: http(url, { retryCount: 0, timeout: scrollFork ? 60000 : 1000 }), pollingInterval: 50 })
   try {
     let ready = false
     for (let i = 0; i < 100; i++) {
@@ -86,6 +86,8 @@ export async function integration(options = {}) {
     console.log(`Deployed test contract at ${contract.address}`)
     const { client, wallets, accounts } = chain
     const read = (functionName, args = []) => client.readContract({ ...contract, functionName, args })
+    const measuredTransactions = []
+    let feeScenario
     const send = async (actor, functionName, args = [], value) => {
       const { request } = await client.simulateContract({ ...contract, functionName, args, account: accounts[actor], ...(value === undefined ? {} : { value }) })
       // Browser wallets add a gas margin. Anvil's raw unlocked-account submission
@@ -95,6 +97,9 @@ export async function integration(options = {}) {
       const hash = await wallets[actor].writeContract({ ...request, gas: estimated + estimated / 4n + 5000n })
       const receipt = await chain.waitForReceipt({ hash })
       assert.equal(receipt.status, 'success', `${functionName} reverted`)
+      if (feeScenario) measuredTransactions.push({ scenario: feeScenario, actor, functionName,
+        gasUsed: String(receipt.gasUsed), to: contract.address,
+        data: encodeFunctionData({ abi: contract.abi, functionName, args }), value: String(value ?? 0n) })
       return receipt
     }
     const fails = async (actor, functionName, args = [], value, errorName) => {
@@ -267,6 +272,44 @@ export async function integration(options = {}) {
     await checkAccounting()
     console.log('PASS stale zero-mask response retry cannot answer a later letter or alter the transcript')
     cases++
+    // Complete real-proof games at the source dictionary's boundaries, including
+    // repeated letters at positions beyond the former uint16 mask capacity.
+    for (const actor of [0, 1]) if (await read('credits', [accounts[actor]]) > 0n) await send(actor, 'withdrawTo', [accounts[actor]])
+    const longest = prover.words.reduce((a, b) => a.length >= b.length ? a : b)
+    for (const [word, label, salt] of [['aa', 'two-letter-solved', 20], ['congratulations', 'over-twelve-solved', 21], [longest, 'longest-solved', 22]]) {
+      assert.ok(prover.words.includes(word))
+      feeScenario = label
+      const round = await create(word, 3, salt)
+      await send(1, 'joinGame', [round.id], stake)
+      for (const letter of new Set(word)) {
+        const code = letter.charCodeAt(0) - 97
+        const mask = [...word].reduce((sum, value, i) => sum + (value === letter ? 2 ** i : 0), 0)
+        await send(1, 'guess', [round.id, code])
+        await send(0, 'respond', [round.id, code, mask])
+      }
+      assert.equal((await read('getGame', [round.id])).revealedMask, 2 ** word.length - 1)
+      await send(0, 'reveal', [round.id, word, round.salt])
+      assert.equal((await read('getGame', [round.id])).winner.toLowerCase(), accounts[1].toLowerCase())
+      await send(1, 'withdrawTo', [accounts[1]])
+      await checkAccounting()
+      console.log(`PASS ${label}: ${word.length} positions, real proof through reveal and withdrawal`)
+      cases++
+    }
+    feeScenario = 'longest-creator-win'
+    const longLoss = await create(longest, 1, 23)
+    await send(1, 'joinGame', [longLoss.id], stake)
+    const absent = [...'abcdefghijklmnopqrstuvwxyz'].find(letter => !longest.includes(letter)).charCodeAt(0) - 97
+    await send(1, 'guess', [longLoss.id, absent])
+    await send(0, 'respond', [longLoss.id, absent, 0])
+    await send(0, 'reveal', [longLoss.id, longest, longLoss.salt])
+    assert.equal((await read('getGame', [longLoss.id])).winner.toLowerCase(), accounts[0].toLowerCase())
+    await send(0, 'withdrawTo', [accounts[0]])
+    await checkAccounting()
+    cases++
+    await writeFile(`artifacts/game-gas${options.scrollFork ? '-scroll-fork' : ''}.json`, JSON.stringify({
+      environment: options.scrollFork ? 'Anvil Scroll state fork; not native Scroll execution' : 'Anvil',
+      root: prover.manifest.root, measuredAt: new Date().toISOString(), transactions: measuredTransactions,
+    }, null, 2) + '\n')
     console.log(`${cases} integration scenarios passed against disposable Anvil.`)
   } finally { await prover?.destroy(); await chain.stop() }
 }
@@ -276,5 +319,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (args.length > 1 || (args.length === 1 && args[0] !== '--scroll-fork')) {
     throw new Error('Usage: node tools/integration.mjs [--scroll-fork]')
   }
-  integration({ scrollFork: args[0] === '--scroll-fork' }).catch(error => { console.error(error); process.exitCode = 1 })
+  integration({ scrollFork: args[0] === '--scroll-fork' }).catch(error => { console.error(error.shortMessage ?? error.message); process.exitCode = 1 })
 }

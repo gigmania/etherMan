@@ -275,9 +275,9 @@ export const etherManAbi = [
       },
       {
         "indexed": false,
-        "internalType": "uint16",
+        "internalType": "uint32",
         "name": "mask",
-        "type": "uint16"
+        "type": "uint32"
       },
       {
         "indexed": false,
@@ -615,9 +615,9 @@ export const etherManAbi = [
             "type": "uint32"
           },
           {
-            "internalType": "uint16",
+            "internalType": "uint32",
             "name": "revealedMask",
-            "type": "uint16"
+            "type": "uint32"
           },
           {
             "internalType": "uint8",
@@ -664,9 +664,9 @@ export const etherManAbi = [
         "type": "uint8[]"
       },
       {
-        "internalType": "uint16[]",
+        "internalType": "uint32[]",
         "name": "masks",
-        "type": "uint16[]"
+        "type": "uint32[]"
       }
     ],
     "stateMutability": "view",
@@ -729,9 +729,9 @@ export const etherManAbi = [
         "type": "uint8"
       },
       {
-        "internalType": "uint16",
+        "internalType": "uint32",
         "name": "mask",
-        "type": "uint16"
+        "type": "uint32"
       }
     ],
     "name": "respond",

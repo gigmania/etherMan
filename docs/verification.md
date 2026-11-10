@@ -2,6 +2,69 @@
 
 Local candidate on `codex/etherman-modernization`, based on legacy commit `2d3e58cc5356e0a836e25896258f1f4e162b5ad3`. Checks were performed before the modernization commit; no push or public deployment was performed. Checks below ran on November 6, 2026, with Node 26.3.0/npm 12.0.1 on macOS arm64. Recommended development runtime is Node 24.15+ LTS.
 
+## Full dictionary v2 — November 9, 2026
+
+User approved removing the arbitrary word-length filter, widening masks,
+regenerating proofs, local rollout, and a read-only Scroll assessment. Baseline
+v1 was committed as `23f32a3` before these changes; v2 work remains uncommitted.
+
+- All 274,137 lowercase words from pinned `word-list@4.1.0` are included. Source
+  entries range from 2 to 28 letters. The Merkle tree has depth 19, occupies
+  32 MiB, and uses a 224-bit packed word.
+- The creation input has no maxlength. Word fields use text semantics, default
+  visible; creation retains optional CSS masking. Chromium verified show/hide
+  and an unchanged 28-letter value. The user's personal Google Password Manager
+  profile was not available to test.
+- Build, TypeScript and 70 frontend tests pass. All 41 Foundry tests pass,
+  including 8,192 invariant calls and highest-position transcript regressions.
+- Real Solidity proofs pass for 2-, 15- and 28-letter words. Negative coverage
+  includes all eight public-input mutations, copied/altered proofs, replay,
+  invalid paths/padding/ranges and fresh high-chain context rejection. Actual
+  local proof-backed creation measured 4,008,885 gas.
+- All 12 local integration scenarios pass, including complete 2-, 15- and
+  28-letter solved games through reveal/withdrawal and a 28-letter creator win.
+  All 12 also pass on the Scroll state fork pinned to block 35,664,262. The first
+  fork run hit an upstream state-fetch timeout; increasing the bounded fork read
+  timeout from 15 to 60 seconds allowed the rerun to pass.
+- All five browser scenarios pass. A longest-word assertion was corrected to
+  count outer tiles rather than nested decorative spans, then passed. The
+  response-word text-input change passed a targeted complete-game rerun. Actual
+  28-letter proof creation, calldata/storage privacy checks and a 375px game
+  layout pass.
+- Node longest-word sample: 70 ms witness, 2,162 ms proof, 560,768 KiB process
+  peak RSS. Development Chromium: 66 ms witness, 1,728 ms proof, 10,126.5 ms
+  worker total. Production Chromium: 61.2 ms witness, 1,785.7 ms proof,
+  10,258.6 ms total. Each returned 8,768 bytes and eight matching public inputs,
+  with no page errors. These are desktop samples; browser/WASM memory and mobile
+  performance remain unmeasured.
+- Production dependency audit reports zero known vulnerabilities. No dependency
+  versions changed. The full proof-build pipeline passes and reproduces the
+  generated circuit, verifier and manifest identities.
+- The native Scroll linked verifier accepts a real proof and rejects an altered
+  root through read-only state overrides. Full-game cost model and limitations:
+  [Scroll assessment](scroll-assessment.md). No public transactions were sent.
+
+Independent review converged at **B1** on source fingerprint
+`b09755606905d39f100db963f4fd9c3a16e3c2b4bed8d1c66890a4610dbc8362`.
+Both reviewers verified all 83 frozen files and exact full-source normalization;
+A ran 40 focused tests and B ran 53. No new objective blockers were found. The
+prior low-severity deployment-helper wallet/client mismatch robustness item
+remains deferred; current callers share a validated loopback transport. Details
+are in `dictionary-review-v2.json`. This is not an external cryptographic audit.
+
+The reviewed v2 bundle is now deployed locally at
+`0x8a791620dd6260079bf849dc5567adc3f2fdc318`, chain 31337. `.env.local` points to it
+and the running UI at `http://127.0.0.1:5173/` loaded the new address and v2 root.
+On-chain root, 8,768-byte proof constant and initial game ID were verified. The
+browser accepted two- and 28-letter dictionary words; text input/show-hide and
+no maxlength passed, with no page errors. Earlier v1 and pre-dictionary contracts
+remain present and unchanged. Local screenshot: `/tmp/etherman-v2-local.png`.
+
+The wider response selector requires a fresh deployment. Preserve old contracts
+and their previous matching UI/ABI (`23f32a3` for dictionary v1); Keccak encoding
+and recovery version 1 stay unchanged. Local rollback restores previous source,
+proof assets and deployment configuration; it does not migrate on-chain games.
+
 ## Dictionary-proof implementation — November 7, 2026
 
 Approved local-only work adds actual zero-knowledge dictionary membership at creation.

@@ -51,6 +51,6 @@ export function loadDictionaryWords(root: string): Promise<string[]> {
 }
 export async function checkDictionaryWord(word: string, root: string) {
   const words = await loadDictionaryWords(root);
-  if (!/^[a-z]{3,12}$/.test(word) || dictionaryIndex(words, word) < 0)
+  if (!/^[a-z]+$/.test(word) || dictionaryIndex(words, word) < 0)
     throw new DictionaryError(dictionaryErrors.word);
 }

@@ -60,7 +60,7 @@ try {
   const base = dictionaryWitness(fixture,prover.words,prover.tree,prover.manifest.root);
   const execute = input => prover.noir.execute(input);
   const invalid = [
-    {...base,word_length:'2'}, {...base,word_length:'13'},
+    {...base,word_length:'0'}, {...base,word_length:String(prover.manifest.maxWordLength + 1)},
     {...base,word:['67',...base.word.slice(1)]},
     {...base,word:['122','122','122',...base.word.slice(3)]},
     {...base,word:[...base.word.slice(0,3),'1',...base.word.slice(4)]},
@@ -71,17 +71,25 @@ try {
     {...base,creator:(1n<<160n).toString()},
   ];
   for(const input of invalid) await assert.rejects(()=>execute(input));
+  const highFixture = recovery('cat', 30);
+  const highBase = dictionaryWitness(highFixture,prover.words,prover.tree,prover.manifest.root);
   const highChain=(1n<<128n)+31337n;
-  const hiCommit=BigInt(commitment(fixture,highChain));
-  const high={...base,chain_hi:'1',commitment_hi:String(hiCommit>>128n),commitment_lo:String(hiCommit&((1n<<128n)-1n))};
+  const hiCommit=BigInt(commitment(highFixture,highChain));
+  const high={...highBase,chain_hi:'1',commitment_hi:String(hiCommit>>128n),commitment_lo:String(hiCommit&((1n<<128n)-1n))};
   const {witness: highWitness}=await execute(high);
   const highProof=await prover.backend.generateProof(highWitness,prover.options);
   assert.equal(await verify(toHex(highProof.proof),highProof.publicInputs),true);
-  await assert.rejects(()=>callCreate(chain.accounts[0],toHex(highProof.proof))); // Different context cannot reuse it.
-  const longest = recovery(prover.words.find(word=>word.length===12),3);
-  const boundaryProof=await prover.prove(longest);
-  assert.equal(await verify(boundaryProof.proof,boundaryProof.publicInputs),true);
-  console.log('PASS real circuit negative cases, high chain limb, and 3/12-character boundaries');
+  // Fresh commitment ensures rejection is due to the chain context, not replay.
+  assert.equal(await chain.client.readContract({...game,functionName:'usedCommitments',args:[toHex(hiCommit,{size:32})]}),false);
+  await assert.rejects(()=>chain.client.simulateContract({...game,account:chain.accounts[0],functionName:'createGame',args:[toHex(hiCommit,{size:32}),3,3,toHex(highProof.proof)],value:parseEther('0.001')}));
+  for (const [i, word] of ['aa', 'congratulations', prover.words.find(word=>word.length===prover.manifest.maxWordLength)].entries()) {
+    const boundary = recovery(word, 40 + i);
+    const boundaryProof = await prover.prove(boundary);
+    assert.equal(await verify(boundaryProof.proof,boundaryProof.publicInputs),true);
+  }
+  assert.throws(() => dictionaryWitness(recovery('z'.repeat(28)),prover.words,prover.tree,prover.manifest.root));
+  assert.throws(() => dictionaryWitness(recovery('z'.repeat(29)),prover.words,prover.tree,prover.manifest.root));
+  console.log('PASS real circuit negatives, fresh high-chain context rejection, and 2/15/28-letter words');
   await writeFile('artifacts/proof-verification-report.json',JSON.stringify({verified:true,publicInputs:8,proofBytes:(proof.length-2)/2,createGas:String(created.gasUsed),root:prover.manifest.root},null,2)+'\n');
   console.log(`Real-proof creation gas: ${created.gasUsed}; no public transactions sent.`);
 } finally { await prover?.destroy(); await chain.stop(); }

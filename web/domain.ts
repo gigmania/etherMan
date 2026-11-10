@@ -44,9 +44,9 @@ export type Recovery = {
   commitment: Hex;
 };
 export function validateWord(word: string) {
-  if (!/^[a-z]{3,12}$/.test(word))
+  if (!/^[a-z]+$/.test(word))
     throw new Error(
-      "Choose 3–12 lowercase letters, without spaces or punctuation.",
+      "Enter a word using lowercase letters, without spaces or punctuation.",
     );
   return word;
 }
@@ -160,7 +160,8 @@ export function parseRecovery(
 }
 export function maskFor(word: string, letter: number) {
   return [...word].reduce(
-    (mask, ch, index) => (ch === alphabet[letter] ? mask | (1 << index) : mask),
+    (mask, ch, index) =>
+      ch === alphabet[letter] ? (mask | (1 << index)) >>> 0 : mask,
     0,
   );
 }

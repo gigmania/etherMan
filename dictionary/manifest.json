@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dictionaryId": "etherman-english-v1",
+  "dictionaryId": "etherman-english-v2",
   "source": {
     "name": "word-list",
     "version": "4.1.0",
@@ -30,18 +30,18 @@
   "normalization": {
     "encoding": "UTF-8",
     "lineSplit": "Split source on CRLF or LF.",
-    "filter": "Keep only entire lines matching ^[a-z]{3,12}$. No case folding, trimming, Unicode normalization, stemming, or added entries.",
+    "filter": "Keep only entire lines matching ^[a-z]+$. No length filter, case folding, trimming, Unicode normalization, stemming, or added entries.",
     "deduplication": "Exact byte-identical entries.",
     "ordering": "Ascending ASCII lexicographic order.",
     "serialization": "One word per line using LF, including exactly one final LF."
   },
   "normalized": {
     "file": "words.txt",
-    "sha256": "fa4d2310bcc2595705cd555be0ccdb73b390877dc670bcc8c3172f905112a7a9",
-    "wordCount": 240784,
-    "byteLength": 2301532,
-    "minimumLength": 3,
-    "maximumLength": 12
+    "sha256": "b731019f3cbd2628a4a4f4463ffd75ec9d03d8bf587ff91c6220f5defd720c25",
+    "wordCount": 274137,
+    "byteLength": 2805375,
+    "minimumLength": 2,
+    "maximumLength": 28
   },
   "limitations": [
     "Membership means inclusion in this exact game vocabulary, not a universal judgment of English validity.",

@@ -74,7 +74,7 @@ read-only RPC requests; the ordinary `test:integration` command stays local.
 
 ## Game rules
 
-- The creator selects 3–12 lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. The word must belong to the fixed 240,784-word game dictionary. A private proof is verified before a game can be created.
+- The creator selects a dictionary word in lowercase letters, 1–8 allowed misses, and a stake greater than zero and at most 1 ETH. The word must belong to the fixed 274,137-word game dictionary. A private proof is verified before a game can be created.
 - The creator downloads a private recovery file before creating the game. It contains the answer and a random salt: keep it private and keep it until settlement. Losing it can forfeit the stake.
 - The challenger matches the exact stake. Each guess and response gets a 24-hour deadline. The creator must actively respond with **every** matching letter position.
 - Responses are provisional. After completion, concession, or challenger inactivity, the creator reveals the answer and salt. The contract verifies the commitment and every prior response before awarding funds.

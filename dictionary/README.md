@@ -1,8 +1,9 @@
-# EtherMan English vocabulary v1
+# EtherMan English vocabulary v2
 
-`words.txt` is the canonical game vocabulary: 240,784 distinct words, each
-containing 3–12 lowercase ASCII letters. Its SHA-256 is
-`fa4d2310bcc2595705cd555be0ccdb73b390877dc670bcc8c3172f905112a7a9`.
+`words.txt` is the canonical game vocabulary: 274,137 distinct words, each
+containing lowercase ASCII letters. No length filter is applied; entries in this
+pinned source range from 2 to 28 letters. Its SHA-256 is
+`b731019f3cbd2628a4a4f4463ffd75ec9d03d8bf587ff91c6220f5defd720c25`.
 Treat its bytes and ordering as versioned protocol input. Any change creates a
 new vocabulary version and requires regenerating the associated Merkle root and
 proof artifacts; do not silently replace this file for an existing deployment.
@@ -26,7 +27,7 @@ snapshot. No words have been added for EtherMan.
 ## Normalization
 
 Split the package's UTF-8 `words.txt` on CRLF or LF. Keep only lines matching
-`^[a-z]{3,12}$`, remove exact duplicates, sort in ascending ASCII lexicographic
+`^[a-z]+$`, remove exact duplicates, sort in ascending ASCII lexicographic
 order, then serialize with LF separators and exactly one final LF. Do not trim
 individual entries, lowercase them, or perform Unicode normalization.
 
@@ -43,7 +44,7 @@ const source = await readFile('node_modules/word-list/words.txt');
 const sha = value => createHash('sha256').update(value).digest('hex');
 assert.equal(sha(source), manifest.source.sha256);
 const words = [...new Set(source.toString('utf8').split(/\r?\n/)
-  .filter(word => /^[a-z]{3,12}$/.test(word)))].sort();
+  .filter(word => /^[a-z]+$/.test(word)))].sort();
 const generated = words.join('\n') + '\n';
 assert.equal(generated, await readFile('dictionary/words.txt', 'utf8'));
 assert.equal(sha(generated), manifest.normalized.sha256);

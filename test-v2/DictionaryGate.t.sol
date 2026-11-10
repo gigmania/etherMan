@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.38;
 
+import {DictionaryConfig} from "../contracts-v2/generated/DictionaryConfig.sol";
 import {EtherMan} from "../contracts-v2/EtherMan.sol";
 import {MockDictionaryVerifier} from "./MockDictionaryVerifier.sol";
 
@@ -69,7 +70,7 @@ contract DictionaryGateTest {
 
     function _open(bytes32 commitment) private returns (uint256) {
         vm.prank(CREATOR);
-        return game.createGame{value: STAKE}(commitment, 3, 3, new bytes(8768));
+        return game.createGame{value: STAKE}(commitment, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
     }
 
     function testConstructorRejectsMissingCodeAndNonCanonicalRoots() public {
@@ -91,7 +92,7 @@ contract DictionaryGateTest {
     function testWrongProofSizesAreRejectedWithoutStateChanges() public {
         bytes32 commitment = SALT;
         for (uint256 i; i < 3; ++i) {
-            uint256 length = i == 0 ? 0 : i == 1 ? 8767 : 8769;
+            uint256 length = i == 0 ? 0 : i == 1 ? DictionaryConfig.PROOF_BYTES - 1 : DictionaryConfig.PROOF_BYTES + 1;
             vm.prank(CREATOR);
             vm.expectRevert(EtherMan.InvalidDictionaryProof.selector);
             game.createGame{value: STAKE}(commitment, 3, 3, new bytes(length));
@@ -118,7 +119,7 @@ contract DictionaryGateTest {
         game = new EtherMan(address(malicious), ROOT);
         vm.prank(CREATOR);
         vm.expectRevert(EtherMan.InvalidDictionaryProof.selector);
-        game.createGame{value: STAKE, gas: 200_000}(SALT, 3, 3, new bytes(8768));
+        game.createGame{value: STAKE, gas: 200_000}(SALT, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         _unchanged(SALT);
         require(malicious.calls() == 0, "verifier mutated state");
     }
@@ -153,11 +154,11 @@ contract DictionaryGateTest {
         verifier.configure(true, false, keccak256(abi.encode(_inputs(commitment, CREATOR, 3))), true);
         vm.prank(CHALLENGER);
         vm.expectRevert(EtherMan.InvalidDictionaryProof.selector);
-        game.createGame{value: STAKE}(commitment, 3, 3, new bytes(8768));
+        game.createGame{value: STAKE}(commitment, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         _unchanged(commitment);
         vm.prank(CREATOR);
         vm.expectRevert(EtherMan.InvalidDictionaryProof.selector);
-        game.createGame{value: STAKE}(commitment, 4, 3, new bytes(8768));
+        game.createGame{value: STAKE}(commitment, 4, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         _unchanged(commitment);
         _open(commitment);
     }

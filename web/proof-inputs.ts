@@ -1,7 +1,8 @@
 import { hexToBytes, toHex } from "viem";
 import type { Recovery } from "./domain";
 
-export const DICTIONARY_DEPTH = 18;
+import { DICTIONARY_DEPTH, MAX_WORD_LENGTH } from "./generated/dictionaryConfig.ts";
+export { DICTIONARY_DEPTH };
 const mask128 = (1n << 128n) - 1n;
 export function dictionaryIndex(words: readonly string[], word: string) {
   let low = 0, high = words.length - 1;
@@ -21,7 +22,7 @@ export function dictionaryPublicInputs(recovery: Recovery, root: string) {
 }
 export function dictionaryWitness(recovery: Recovery, words: readonly string[], tree: Uint8Array, root: string) {
   const index = dictionaryIndex(words, recovery.word);
-  if (!/^[a-z]{3,12}$/.test(recovery.word) || index < 0) throw new Error("Word is not in this game's dictionary.");
+  if (!/^[a-z]+$/.test(recovery.word) || recovery.word.length > MAX_WORD_LENGTH || index < 0) throw new Error("Word is not in this game's dictionary.");
   const capacity = 2 ** DICTIONARY_DEPTH;
   if (tree.length !== capacity * 64 || index >= capacity) throw new Error("Invalid dictionary tree.");
   const inputs = dictionaryPublicInputs(recovery, root);
@@ -36,7 +37,7 @@ export function dictionaryWitness(recovery: Recovery, words: readonly string[], 
   return {
     root: inputs[0], chain_hi: inputs[1], chain_lo: inputs[2], game_contract: inputs[3],
     creator: inputs[4], word_length: inputs[5], commitment_hi: inputs[6], commitment_lo: inputs[7],
-    word: Array.from({ length: 12 }, (_, i) => String(recovery.word.charCodeAt(i) || 0)),
+    word: Array.from({ length: MAX_WORD_LENGTH }, (_, i) => String(recovery.word.charCodeAt(i) || 0)),
     salt: [...hexToBytes(recovery.salt)].map(String), siblings, directions,
   };
 }

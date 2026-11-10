@@ -1,3 +1,5 @@
+mod config;
+use config::{MAX_WORD_LENGTH, DICTIONARY_DEPTH};
 use keccak256::keccak256;
 use poseidon::poseidon2::Poseidon2;
 
@@ -11,16 +13,16 @@ fn main(
     word_length: pub u8,
     commitment_hi: pub u128,
     commitment_lo: pub u128,
-    word: [u8; 12],
+    word: [u8; MAX_WORD_LENGTH],
     salt: [u8; 32],
-    siblings: [Field; 18],
-    directions: [bool; 18],
+    siblings: [Field; DICTIONARY_DEPTH],
+    directions: [bool; DICTIONARY_DEPTH],
 ) {
     game_contract.assert_max_bit_size::<160>();
     creator.assert_max_bit_size::<160>();
-    assert(word_length >= 3 & word_length <= 12);
+    assert(word_length > 0 & word_length as u32 <= MAX_WORD_LENGTH);
     let mut packed: Field = 0;
-    for i in 0..12 {
+    for i in 0..MAX_WORD_LENGTH {
         if i < word_length as u32 {
             assert(word[i] >= 97 & word[i] <= 122);
         } else {
@@ -29,7 +31,7 @@ fn main(
         packed = packed * 256 + word[i] as Field;
     }
     let mut node = Poseidon2::hash([1, word_length as Field, packed], 3);
-    for i in 0..18 {
+    for i in 0..DICTIONARY_DEPTH {
         let left = if directions[i] { siblings[i] } else { node };
         let right = if directions[i] { node } else { siblings[i] };
         node = Poseidon2::hash([2, left, right], 3);
@@ -53,7 +55,7 @@ fn main(
     }
     preimage[127] = 160;
     preimage[191] = word_length;
-    for i in 0..12 { preimage[192 + i] = word[i]; }
+    for i in 0..MAX_WORD_LENGTH { preimage[192 + i] = word[i]; }
     let digest = keccak256(preimage, 224);
     let mut hi: u128 = 0;
     let mut lo: u128 = 0;

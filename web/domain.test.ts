@@ -63,12 +63,33 @@ describe("precise amounts and canonical words", () => {
   ])("rejects invalid stake %s", (value) =>
     expect(() => parseStake(value)).toThrow(),
   );
-  it.each(["ab", "abcdefghijklmn", "Ether", "two words", "café", "abc1"])(
+  it.each(["", "Ether", "two words", "café", "abc1"])(
     "rejects invalid word %s",
     (word) => expect(() => validateWord(word)).toThrow(),
   );
+  it.each([
+    "ab",
+    "abcdefghijklmn",
+    "ethylenediaminetetraacetates",
+    "a".repeat(100),
+  ])(
+    "accepts lowercase syntax without imposing a dictionary length limit: %s",
+    (word) => expect(validateWord(word)).toBe(word),
+  );
 });
 describe("private recovery", () => {
+  it.each(["ab", "abcdefghijklmn", "ethylenediaminetetraacetates"])(
+    "preserves version 1 recovery for %s",
+    (word) => {
+      const commitment = wordCommitment(31337, contract, creator, word, salt);
+      expect(
+        parseRecovery(JSON.stringify({ ...backup, word, commitment }), {
+          ...expected,
+          commitment,
+        }),
+      ).toMatchObject({ version: 1, word, commitment, salt });
+    },
+  );
   it("validates network, contract, owner and commitment", () =>
     expect(parseRecovery(JSON.stringify(backup), expected).word).toBe("ether"));
   it("domain-separates the commitment", () => {
@@ -103,6 +124,14 @@ describe("private recovery", () => {
   });
 });
 describe("game state and masks", () => {
+  it("preserves every bit through the 28th letter in uint32 masks", () => {
+    const word = "a".repeat(27) + "z";
+    expect(maskFor(word, 25)).toBe(2 ** 27);
+    expect(maskFor("a".repeat(28), 0)).toBe(2 ** 28 - 1);
+    expect(
+      visibleWord(28, [0, 25], [maskFor(word, 0), maskFor(word, 25)]).join(""),
+    ).toBe(word);
+  });
   it("maps all occurrences and reconstructs only reported letters", () => {
     expect(maskFor("ether", 4)).toBe(9);
     expect(maskFor("ether", 25)).toBe(0);

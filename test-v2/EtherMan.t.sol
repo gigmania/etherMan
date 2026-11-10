@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.38;
 
+import {DictionaryConfig} from "../contracts-v2/generated/DictionaryConfig.sol";
 import {EtherMan} from "../contracts-v2/EtherMan.sol";
 import {MockDictionaryVerifier} from "./MockDictionaryVerifier.sol";
 
@@ -15,7 +16,7 @@ contract RejectingPlayer {
     EtherMan private immutable game;
     constructor(EtherMan instance) { game = instance; }
     function openAndCancel() external payable {
-        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(8768));
+        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         game.cancelGame(id);
     }
     function withdraw(address payable recipient) external { game.withdrawTo(recipient); }
@@ -27,7 +28,7 @@ contract ReenteringPlayer {
     bool public blocked;
     constructor(EtherMan instance) { game = instance; }
     function attack() external payable {
-        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(8768));
+        uint256 id = game.createGame{value: msg.value}(bytes32(uint256(1)), 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         game.cancelGame(id);
         game.withdrawTo(payable(address(this)));
     }
@@ -57,7 +58,7 @@ contract EtherManTest {
     function _open(string memory word, uint8 length, uint8 misses) private returns (uint256 id) {
         bytes32 commitment = game.computeCommitment(CREATOR, word, _salt(game.nextGameId()));
         vm.prank(CREATOR);
-        id = game.createGame{value: STAKE}(commitment, length, misses, new bytes(8768));
+        id = game.createGame{value: STAKE}(commitment, length, misses, new bytes(DictionaryConfig.PROOF_BYTES));
     }
 
     function _salt(uint256 id) private pure returns (bytes32) {
@@ -69,7 +70,7 @@ contract EtherManTest {
         game.joinGame{value: STAKE}(id);
     }
 
-    function _turn(uint256 id, uint8 letter, uint16 mask) private {
+    function _turn(uint256 id, uint8 letter, uint32 mask) private {
         vm.prank(CHALLENGER);
         game.guess(id, letter);
         vm.prank(CREATOR);
@@ -83,6 +84,88 @@ contract EtherManTest {
 
     function _assertAccounting() private view {
         require(game.totalEscrow() + game.totalCredits() == address(game).balance, "accounting");
+    }
+
+    function _positions(string memory word, uint8 letter) private pure returns (uint32 mask) {
+        bytes memory letters = bytes(word);
+        for (uint256 i; i < letters.length; ++i) {
+            if (uint8(letters[i]) == letter + 97) mask |= uint32(uint256(1) << i);
+        }
+    }
+
+    function testTwoLetterWordCanCompleteAndSettle() public {
+        uint256 id = _open("aa", 2, 3);
+        _join(id);
+        _turn(id, 0, 3);
+        require(game.getGame(id).state == EtherMan.State.AwaitReveal, "two-letter full mask");
+        _reveal(id, "aa");
+        require(game.getGame(id).winner == CHALLENGER, "two-letter winner");
+        require(game.credits(CHALLENGER) == 2 * STAKE, "two-letter pot");
+        _assertAccounting();
+    }
+
+    function testLongestDictionaryWordCompletesAllPositionsAndWithdraws() public {
+        string memory word = "ethylenediaminetetraacetates";
+        require(bytes(word).length == DictionaryConfig.MAX_WORD_LENGTH, "longest fixture drift");
+        uint256 id = _open(word, uint8(bytes(word).length), 3);
+        _join(id);
+        for (uint8 letter; letter < 26; ++letter) {
+            uint32 mask = _positions(word, letter);
+            if (mask != 0) _turn(id, letter, mask);
+        }
+        EtherMan.Game memory info = game.getGame(id);
+        require(info.revealedMask == 0x0fffffff, "all 28 positions retained");
+        require(info.state == EtherMan.State.AwaitReveal, "long word awaits reveal");
+        (uint8[] memory letters, uint32[] memory masks) = game.getGuesses(id);
+        uint32 transcriptMask;
+        for (uint256 i; i < masks.length; ++i) {
+            require(masks[i] == _positions(word, letters[i]), "wide transcript preserved");
+            transcriptMask |= masks[i];
+        }
+        require(transcriptMask == info.revealedMask, "complete transcript");
+        _reveal(id, word);
+        require(game.getGame(id).winner == CHALLENGER, "long word challenger wins");
+        require(keccak256(bytes(game.getGame(id).finalWord)) == keccak256(bytes(word)), "long word stored");
+        require(game.credits(CHALLENGER) == STAKE * 2, "long word pot");
+        uint256 beforeBalance = CHALLENGER.balance;
+        vm.prank(CHALLENGER);
+        game.withdrawTo(payable(CHALLENGER));
+        require(CHALLENGER.balance == beforeBalance + STAKE * 2, "long word withdrawal");
+        _assertAccounting();
+    }
+
+    function testLongestWordCreatorWinsWithHonestHighPositionResponse() public {
+        string memory word = "ethylenediaminetetraacetates";
+        uint256 id = _open(word, 28, 1);
+        _join(id);
+        uint32 lastLetterMask = _positions(word, 18); // s at position 27
+        require(lastLetterMask == uint32(1) << 27, "high-position fixture");
+        vm.prank(CHALLENGER);
+        game.guess(id, 18);
+        vm.prank(CREATOR);
+        vm.expectRevert(EtherMan.InvalidInput.selector);
+        game.respond(id, 18, uint32(1) << 28);
+        vm.prank(CREATOR);
+        game.respond(id, 18, lastLetterMask);
+        _turn(id, 25, 0); // z absent, exhaust misses
+        _reveal(id, word);
+        require(game.getGame(id).winner == CREATOR, "honest high-position response accepted");
+        uint256 beforeBalance = CREATOR.balance;
+        vm.prank(CREATOR);
+        game.withdrawTo(payable(CREATOR));
+        require(CREATOR.balance == beforeBalance + STAKE * 2, "creator withdrawal");
+        _assertAccounting();
+    }
+
+    function testOmittingHighestPositionLosesOnReveal() public {
+        string memory word = "ethylenediaminetetraacetates";
+        uint256 id = _open(word, 28, 1);
+        _join(id);
+        _turn(id, 18, 0); // dishonest omission of s at bit 27
+        _reveal(id, word);
+        require(game.getGame(id).winner == CHALLENGER, "highest position checked during reveal");
+        require(game.credits(CHALLENGER) == STAKE * 2, "dishonesty pot");
+        _assertAccounting();
     }
 
     function testChallengerWinsAllLettersAndWithdrawsOnce() public {
@@ -261,21 +344,21 @@ contract EtherManTest {
         vm.expectRevert(EtherMan.UnknownGame.selector);
         game.getGuesses(1);
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(bytes32(0), 3, 3, new bytes(8768));
+        game.createGame{value: STAKE}(bytes32(0), 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 2, 3, new bytes(8768));
+        game.createGame{value: STAKE}(SALT, 0, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 13, 3, new bytes(8768));
+        game.createGame{value: STAKE}(SALT, DictionaryConfig.MAX_WORD_LENGTH + 1, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 3, 0, new bytes(8768));
+        game.createGame{value: STAKE}(SALT, 3, 0, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidInput.selector);
-        game.createGame{value: STAKE}(SALT, 3, 9, new bytes(8768));
+        game.createGame{value: STAKE}(SALT, 3, 9, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidStake.selector);
-        game.createGame(SALT, 3, 3, new bytes(8768));
+        game.createGame(SALT, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.expectRevert(EtherMan.InvalidStake.selector);
-        game.createGame{value: 1 ether + 1}(SALT, 3, 3, new bytes(8768));
-        game.createGame{value: 1}(SALT, 12, 8, new bytes(8768));
-        game.createGame{value: 1 ether}(bytes32(uint256(2)), 3, 1, new bytes(8768));
+        game.createGame{value: 1 ether + 1}(SALT, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
+        game.createGame{value: 1}(SALT, DictionaryConfig.MAX_WORD_LENGTH, 8, new bytes(DictionaryConfig.PROOF_BYTES));
+        game.createGame{value: 1 ether}(bytes32(uint256(2)), 3, 1, new bytes(DictionaryConfig.PROOF_BYTES));
     }
 
     function testAuthorizationDuplicatesAndResponseBounds() public {
@@ -395,7 +478,7 @@ contract EtherManTest {
         _join(id);
         vm.prank(CHALLENGER);
         game.guess(id, 0);
-        (uint8[] memory letters, uint16[] memory masks) = game.getGuesses(id);
+        (uint8[] memory letters, uint32[] memory masks) = game.getGuesses(id);
         require(letters.length == 0 && masks.length == 0, "no uncompleted response");
         require(game.getGame(id).pendingLetter == 0, "pending a");
         vm.prank(CREATOR);
@@ -425,7 +508,7 @@ contract EtherManTest {
         require(afterGame.deadline == beforeGame.deadline, "deadline unchanged");
         require(afterGame.misses == beforeGame.misses, "misses unchanged");
         require(afterGame.revealedMask == beforeGame.revealedMask, "positions unchanged");
-        (uint8[] memory letters, uint16[] memory masks) = game.getGuesses(id);
+        (uint8[] memory letters, uint32[] memory masks) = game.getGuesses(id);
         require(letters.length == 1 && masks.length == 1 && letters[0] == 25 && masks[0] == 0, "transcript unchanged");
 
         vm.prank(CREATOR);
@@ -484,9 +567,9 @@ contract EtherManTest {
         require(original != other.computeCommitment(CREATOR, "banana", SALT), "contract domain");
     }
 
-    function testFuzzValidResponseMasksMatchCommittedWord(uint8 letterSeed, uint16 responseSeed) public {
+    function testFuzzValidResponseMasksMatchCommittedWord(uint8 letterSeed, uint32 responseSeed) public {
         uint8 letter = letterSeed % 26;
-        uint16 mask = responseSeed % 64;
+        uint32 mask = responseSeed % 64;
         uint256 id = _open("banana", 6, 3);
         _join(id);
         _turn(id, letter, mask);
@@ -495,7 +578,7 @@ contract EtherManTest {
             game.concede(id);
         }
         _reveal(id, "banana");
-        uint16 expected = letter == 0 ? 42 : letter == 1 ? 1 : letter == 13 ? 20 : 0;
+        uint32 expected = letter == 0 ? 42 : letter == 1 ? 1 : letter == 13 ? 20 : 0;
         address expectedWinner = mask == expected ? CREATOR : CHALLENGER;
         require(game.getGame(id).winner == expectedWinner, "transcript winner");
         _assertAccounting();
@@ -505,9 +588,9 @@ contract EtherManTest {
         uint256 firstStake = uint256(firstSeed) % 1 ether + 1;
         uint256 secondStake = uint256(secondSeed) % 1 ether + 1;
         vm.prank(CREATOR);
-        uint256 first = game.createGame{value: firstStake}(SALT, 3, 3, new bytes(8768));
+        uint256 first = game.createGame{value: firstStake}(SALT, 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.prank(CHALLENGER);
-        uint256 second = game.createGame{value: secondStake}(bytes32(uint256(2)), 3, 3, new bytes(8768));
+        uint256 second = game.createGame{value: secondStake}(bytes32(uint256(2)), 3, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         vm.prank(CREATOR);
         game.cancelGame(first);
         vm.prank(CREATOR);
@@ -541,7 +624,7 @@ contract EtherManHandler {
         bytes32 salt = keccak256(abi.encode(game.nextGameId(), actor));
         bytes32 commitment = game.computeCommitment(actor, "banana", salt);
         vm.prank(actor);
-        uint256 id = game.createGame{value: uint256(stakeSeed) % 1 ether + 1}(commitment, 6, 3, new bytes(8768));
+        uint256 id = game.createGame{value: uint256(stakeSeed) % 1 ether + 1}(commitment, 6, 3, new bytes(DictionaryConfig.PROOF_BYTES));
         salts[id] = salt;
     }
 
@@ -565,7 +648,7 @@ contract EtherManHandler {
         if (id == 0) return;
         EtherMan.Game memory info = game.getGame(id);
         uint8 letter = info.pendingLetter;
-        uint16 mask = letter == 0 ? 42 : letter == 1 ? 1 : letter == 13 ? 20 : 0;
+        uint32 mask = letter == 0 ? 42 : letter == 1 ? 1 : letter == 13 ? 20 : 0;
         if (!honest) mask = (mask + 1) % 64;
         vm.prank(info.creator);
         try game.respond(id, letter, mask) {} catch {}

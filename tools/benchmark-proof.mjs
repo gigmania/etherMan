@@ -9,7 +9,7 @@ const manifest = JSON.parse(await readFile('dictionary/tree-manifest.json', 'utf
 const words = (await readFile('dictionary/words.txt', 'utf8')).trimEnd().split('\n');
 const tree = await readFile('public/zk/dictionary-tree.bin');
 // Public, synthetic benchmark values; never a user's recovery material.
-const recovery = { version: 1, chainId: 31337, contract: '0x1111111111111111111111111111111111111111', creator: '0x2222222222222222222222222222222222222222', word: 'ether', salt: '0x' + 'ab'.repeat(32) };
+const recovery = { version: 1, chainId: 31337, contract: '0x1111111111111111111111111111111111111111', creator: '0x2222222222222222222222222222222222222222', word: words.reduce((a,b) => a.length >= b.length ? a : b), salt: '0x' + 'ab'.repeat(32) };
 recovery.commitment = keccak256(encodeAbiParameters([{type:'uint256'}, {type:'address'}, {type:'address'}, {type:'string'}, {type:'bytes32'}], [31337n, recovery.contract, recovery.creator, recovery.word, recovery.salt]));
 const noir = new Noir(program);
 let t = performance.now();

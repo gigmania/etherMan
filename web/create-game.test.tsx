@@ -84,6 +84,104 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("keeps the word visible by default and masks it without credential input semantics", () => {
+  render(<CreateGame remember={vi.fn()} />);
+  const input = screen.getByLabelText(/Your secret word/) as HTMLInputElement;
+  expect(input.type).toBe("text");
+  expect(input.name).toBe("game-word");
+  expect(input.autocomplete).toBe("off");
+  expect(input.hasAttribute("maxLength")).toBe(false);
+  expect(input.dataset.masked).toBe("false");
+  fireEvent.change(input, {
+    target: { value: "ethylenediaminetetraacetates" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Hide word" }));
+  expect(input.type).toBe("text");
+  expect(input.dataset.masked).toBe("true");
+  expect(input.value).toBe("ethylenediaminetetraacetates");
+  fireEvent.click(screen.getByRole("button", { name: "Show word" }));
+  expect(input.dataset.masked).toBe("false");
+  expect(mocks.run).not.toHaveBeenCalled();
+  expect(mocks.checkWord).not.toHaveBeenCalled();
+});
+
+it.each(["ab", "ethylenediaminetetraacetates"])(
+  "creates a game for dictionary word %s without truncating the input",
+  async (word) => {
+    const remember = vi.fn();
+    render(<CreateGame remember={remember} />);
+    fireEvent.change(screen.getByLabelText(/Your secret word/), {
+      target: { value: word },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Download recovery file/ }),
+    );
+    fireEvent.click(await screen.findByRole("checkbox"));
+    expect(mocks.checkWord).toHaveBeenCalledWith(word, mocks.root);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Lock stake & create game/ }),
+    );
+    await waitFor(() => expect(mocks.run).toHaveBeenCalledOnce());
+    expect(remember.mock.calls[0][0]).toMatchObject({ version: 1, word });
+    expect(mocks.run.mock.calls[0][2][1]).toBe(word.length);
+  },
+);
+
+it("submits creator responses with the 28th letter position intact", async () => {
+  const word = "ethylenediaminetetraacetates";
+  const salt = `0x${"01".repeat(32)}` as Hex;
+  const commitment = wordCommitment(
+    31337,
+    mocks.contract as Address,
+    mocks.account as Address,
+    word,
+    salt,
+  );
+  const secret: Recovery = {
+    version: 1,
+    chainId: 31337,
+    contract: mocks.contract as Address,
+    creator: mocks.account as Address,
+    word,
+    salt,
+    commitment,
+  };
+  const game: Game = {
+    creator: mocks.account as Address,
+    challenger: "0x3333333333333333333333333333333333333333",
+    commitment,
+    stake: 1n,
+    deadline: 100n,
+    wordLength: 28,
+    maxMisses: 6,
+    misses: 0,
+    guessedLetters: 1 << 18,
+    revealedMask: 0,
+    pendingLetter: 18,
+    state: 2,
+    winner: "0x0000000000000000000000000000000000000000",
+    finalWord: "",
+  };
+  mocks.useGame.mockReturnValue({
+    data: { game, guesses: [[], []] },
+    refetch: vi.fn(),
+  });
+  render(<GameView id={7n} secret={secret} />);
+  await waitFor(() =>
+    expect(
+      (screen.getByLabelText(/Your secret word/) as HTMLInputElement).value,
+    ).toBe(word),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Submit letter positions/ }),
+  );
+  expect(mocks.run).toHaveBeenCalledWith("Respond to guess", "respond", [
+    7n,
+    18,
+    2 ** 27,
+  ]);
+});
+
 it("consumes a prepared secret before submission and retains it after uncertain confirmation", async () => {
   const recoveries: Recovery[] = [];
   let finish: (value: undefined) => void = () => {};
